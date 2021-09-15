@@ -5,7 +5,9 @@ import cv2 as cv
 import pandas as pd
 
 
-DATA_FOLDER_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043'
+
+
+DATA_FOLDER_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043\images'
 
 files = list(os.listdir(DATA_FOLDER_PATH))
 print(len(files))

@@ -76,7 +76,7 @@ def update_scatter(value):
     [dash.dependencies.Input('graph-with-slider', 'clickData')]
 )
 def update_image(clickData):
-    DATA_FOLDER_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043'
+    DATA_FOLDER_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043\images'
     IMAGE_NAME = str(clickData['points'][0]['hovertext'])
    
     FULL_PATH = DATA_FOLDER_PATH + '\\' + IMAGE_NAME 
@@ -90,7 +90,7 @@ def update_image(clickData):
     [Input('image2d', 'value')]
 )
 def update_image(value):
-    DATA_FOLDER_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043'
+    DATA_FOLDER_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043\images'
     IMAGE_NAME = '000_012.png'
     FULL_PATH = DATA_FOLDER_PATH + '\\' + IMAGE_NAME 
     img = io.imread(FULL_PATH)
