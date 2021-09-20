@@ -21,14 +21,14 @@ DATA_FOLDER_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043\images'
 ANNOTATIONS_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043\annotations\xmls'
 
 
-def create_annotation(img,image_name,X,Y):
+def create_annotation(img,image_name,xmin,ymin,xmax,ymax):
     path = DATA_FOLDER_PATH + '\\' + image_name
     base_name = image_name[:image_name.rfind('.')]
     xml_name = ANNOTATIONS_PATH +'\\' + base_name + '.xml'
    
     anntoation='''
 <annotation>
-	<folder>dog_dataset</folder>
+	<folder>20210621_092043</folder>
 	<filename>{}</filename>
 	<path>{}</path>
 	<source>
@@ -53,7 +53,7 @@ def create_annotation(img,image_name,X,Y):
 		</bndbox>
 	</object>
 </annotation>
-'''.format(image_name,path,img.shape[0],img.shape[1],X[0],Y[0],X[1],Y[1])   
+'''.format(image_name,path,img.shape[0],img.shape[1],xmin,ymin,xmax,ymax)   
     print(xml_name)
     #print(anntoation)
     f = open(xml_name, "w")
@@ -102,8 +102,10 @@ def tresh_otsu(image,image_name):
     image_label_overlay*=255
     cv.rectangle(image_label_overlay,start,stop,(0,0,255),4)
     cv.imwrite(DATA_FOLDER_OTSU_PATH, image_label_overlay)
-    
-    create_annotation(image,image_name,X=(minc,maxc),Y=(minr,maxr))
+    print(minr, minc, maxr, maxc)
+    #plt.imshow(image)
+    #plt.show()
+    create_annotation(image,image_name,minr, minc, maxr, maxc)
 
 def kapur_threshold(image):
     """ Runs the Kapur's threshold algorithm.
