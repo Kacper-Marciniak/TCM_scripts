@@ -19,6 +19,7 @@ import xml.etree.cElementTree as ET
 
 DATA_FOLDER_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043\images'
 ANNOTATIONS_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043\annotations\xmls'
+ML_PATH = r'C:\Users\Konrad\tcm_scan\20210621_092043_data\images'
 
 
 def create_annotation(img,image_name,xmin,ymin,xmax,ymax):
@@ -32,7 +33,7 @@ def create_annotation(img,image_name,xmin,ymin,xmax,ymax):
 	<filename>{}</filename>
 	<path>{}</path>
 	<source>
-		<database>Unknown</database>
+		<database>TCM_database</database>
 	</source>
 	<size>
 		<width>{}</width>
@@ -53,7 +54,7 @@ def create_annotation(img,image_name,xmin,ymin,xmax,ymax):
 		</bndbox>
 	</object>
 </annotation>
-'''.format(image_name,path,img.shape[0],img.shape[1],xmin,ymin,xmax,ymax)   
+'''.format(image_name,path,img.shape[1],img.shape[0],xmin,ymin,xmax,ymax)   
     print(xml_name)
     #print(anntoation)
     f = open(xml_name, "w")
@@ -99,6 +100,7 @@ def tresh_otsu(image,image_name):
         cv.imwrite(DATA_FOLDER_TOOTH_PATH, roi)
     except:
         print("Wrong blob detected")
+
     image_label_overlay*=255
     cv.rectangle(image_label_overlay,start,stop,(0,0,255),4)
     cv.imwrite(DATA_FOLDER_OTSU_PATH, image_label_overlay)
@@ -106,6 +108,7 @@ def tresh_otsu(image,image_name):
     #plt.imshow(image)
     #plt.show()
     create_annotation(image,image_name,minr, minc, maxr, maxc)
+
 
 def kapur_threshold(image):
     """ Runs the Kapur's threshold algorithm.
@@ -133,90 +136,13 @@ def kapur_threshold(image):
     f_entropy = -c_entropy_i / c_hist_i + np.log(c_hist_i)
 
     return np.argmax(b_entropy + f_entropy)
-def _get_regions_entropy(hist, c_hist, thresholds):
-    """Get the total entropy of regions for a given set of thresholds"""
 
-    total_entropy = 0
-    for i in range(len(thresholds) - 1):
-        # Thresholds
-        t1 = thresholds[i] + 1
-        t2 = thresholds[i + 1]
-
-        # print(thresholds, t1, t2)
-
-        # Cumulative histogram
-        hc_val = c_hist[t2] - c_hist[t1 - 1]
-
-        # Normalized histogram
-        h_val = hist[t1:t2 + 1] / hc_val if hc_val > 0 else 1
-
-        # entropy
-        entropy = -(h_val * np.log(h_val + (h_val <= 0))).sum()
-
-        # Updating total entropy
-        total_entropy += entropy
-
-    return total_entropy
-def _get_thresholds(hist, c_hist, nthrs):
-    """Get the thresholds that maximize the entropy of the regions
-    @param hist: The normalized histogram of the image
-    @type hist: ndarray
-    @param c_hist: The cummuative normalized histogram of the image
-    @type c_hist: ndarray
-    @param nthrs: The number of thresholds
-    @type nthrs: int
-    """
-    # Thresholds combinations
-    thr_combinations = combinations(range(255), nthrs)
-
-    max_entropy = 0
-    opt_thresholds = None
-
-    # Extending histograms for convenience
-    # hist = np.append([0], hist)
-    c_hist = np.append(c_hist, [0])
-
-    for thresholds in thr_combinations:
-        # Extending thresholds for convenience
-        e_thresholds = [-1]
-        e_thresholds.extend(thresholds)
-        e_thresholds.extend([len(hist) - 1])
-
-        # Computing regions entropy for the current combination of thresholds
-        regions_entropy = _get_regions_entropy(hist, c_hist, e_thresholds)
-
-        if regions_entropy > max_entropy:
-            max_entropy = regions_entropy
-            opt_thresholds = thresholds
-
-    return opt_thresholds
-def kapur_multithreshold(image, nthrs):
-    """ Runs the Kapur's multi-threshold algorithm.
-    Reference:
-    Kapur, J. N., P. K. Sahoo, and A. K. C.Wong. ‘‘A New Method for Gray-Level
-    Picture Thresholding Using the Entropy of the Histogram,’’ Computer Vision,
-    Graphics, and Image Processing 29, no. 3 (1985): 273–285.
-    @param image: The input image
-    @type image: ndarray
-    @param nthrs: The number of thresholds
-    @type nthrs: int
-    @return: The estimated threshold
-    @rtype: int
-    """
-    # Histogran
-    hist, _ = np.histogram(image, bins=range(256), density=True)
-
-    # Cumulative histogram
-    c_hist = hist.cumsum()
-
-    return _get_thresholds(hist, c_hist, nthrs)
 
 
 files = list(os.listdir(DATA_FOLDER_PATH))
 for i,image_name in enumerate(files):
     
-
-    if(i>=0):
+    if((i>=0 and i<=10) or (i>=1500 and i<=1510)):
         img_path = DATA_FOLDER_PATH +'\\'+ image_name
         img = cv.imread(img_path,-1)
         try:
@@ -226,7 +152,5 @@ for i,image_name in enumerate(files):
             sys.exit(1)
         tresh_otsu(img,image_name)
  
-
-
     print("Processed images: {}/{}".format(i,len(files)))
     
