@@ -107,7 +107,7 @@ def tresh_otsu(image,image_name):
     print(minr, minc, maxr, maxc)
     #plt.imshow(image)
     #plt.show()
-    create_annotation(image,image_name,minr, minc, maxr, maxc)
+    create_annotation(image,image_name,minc, minr, maxc, maxr)
 
 
 def kapur_threshold(image):
@@ -142,7 +142,7 @@ def kapur_threshold(image):
 files = list(os.listdir(DATA_FOLDER_PATH))
 for i,image_name in enumerate(files):
     
-    if((i>=0 and i<=10) or (i>=1500 and i<=1510)):
+    if((i>=0 and i<=50) or (i>=1000 and i<=1050) or (i>=2000 and i<=2050) or (i>=2700 and i<=2750)):
         img_path = DATA_FOLDER_PATH +'\\'+ image_name
         img = cv.imread(img_path,-1)
         try:

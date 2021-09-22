@@ -6,6 +6,7 @@ import pandas as pd
 import sys
 from shutil import copyfile
 
+
 # ML_PATH
 ML_PATH = r'C:\Users\Konrad\tcm_scan\20210621_092043_data'
 ML_PATH_otsu_tresh = ML_PATH + r'\otsu_tresh'
