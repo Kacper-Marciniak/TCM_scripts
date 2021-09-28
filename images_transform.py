@@ -17,15 +17,20 @@ import matplotlib.patches as mpatches
 from itertools import combinations
 import xml.etree.cElementTree as ET
 
-DATA_FOLDER_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043\images'
-ANNOTATIONS_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043\annotations\xmls'
+DATA_FOLDER_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043'
 ML_PATH = r'C:\Users\Konrad\tcm_scan\20210621_092043_data\images'
+
+DATA_FOLDER_PATH_images =  DATA_FOLDER_PATH + r'\images'
+DATA_FOLDER_PATH_annotations =  DATA_FOLDER_PATH + r'\annotations\xmls' 
+DATA_FOLDER_PATH_otsu_tooth = DATA_FOLDER_PATH + r'\otsu_tooth'
+DATA_FOLDER_PATH_otsu_tresh = DATA_FOLDER_PATH + r'\otsu_tresh' 
+
 
 
 def create_annotation(img,image_name,xmin,ymin,xmax,ymax):
     path = DATA_FOLDER_PATH + '\\' + image_name
     base_name = image_name[:image_name.rfind('.')]
-    xml_name = ANNOTATIONS_PATH +'\\' + base_name + '.xml'
+    xml_name = DATA_FOLDER_PATH_annotations +'\\' + base_name + '.xml'
    
     anntoation='''
 <annotation>
@@ -62,12 +67,13 @@ def create_annotation(img,image_name,xmin,ymin,xmax,ymax):
     f.close()
 
 def tresh_otsu(image,image_name):
-    DATA_FOLDER_OTSU_PATH = r'C:\Users\Konrad\tcm_scan\20210621_092043\otsu_tresh' + '\\' + image_name
-    DATA_FOLDER_TOOTH_PATH = r'C:\Users\Konrad\tcm_scan\20210621_092043\otsu_tooth' + '\\' + image_name
     
-    '''if(os.path.exists(DATA_FOLDER_OTSU_PATH)): 
+    DATA_FOLDER_OTSU_PATH = DATA_FOLDER_PATH_otsu_tooth + '\\' + image_name
+    DATA_FOLDER_TOOTH_PATH = DATA_FOLDER_PATH_otsu_tresh + '\\' + image_name
+    
+    if(os.path.exists(DATA_FOLDER_OTSU_PATH)): 
         print("File {} exist".format(image_name))
-        return -1    # Not overwrite files '''
+        return -1    # Not overwrite files 
 
     # Apply threshold
     thresh = kapur_threshold(image)

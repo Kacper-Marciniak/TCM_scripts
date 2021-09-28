@@ -3,8 +3,9 @@ import os
 from shutil import copyfile
 import cv2 as cv
 
-# ML_PATH
 ML_PATH = r'C:\Users\Konrad\tcm_scan\20210621_092043_data'
+
+# ML_PATH
 ML_PATH_otsu_tresh = ML_PATH + r'\otsu_tresh'
 ML_PATH_otsu_tresh_F =  ML_PATH + r'\otsu_tresh_F'
 ML_PATH_annotations =  ML_PATH + r'\annotations\xmls' 

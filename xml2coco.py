@@ -43,7 +43,7 @@ def get_filename_as_int(filename):
         filename = filename.replace("\\", "/")
         filename = filename.split('.')[0]
         filename = filename.split('_')[1]
-        print("id:",filename)
+
       
         return int(filename)
     except:
@@ -159,3 +159,15 @@ if __name__ == "__main__":
     print("Success: {}".format(args.json_file))
 
 # python xml2coco.py C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\xmls C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\annotations.json
+
+
+'''
+
+python xml2coco.py C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\train C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\annotations_train.json
+
+python xml2coco.py C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\val C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\annotations_val.json
+
+python xml2coco.py C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\test C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\annotations_test.json
+
+
+'''
