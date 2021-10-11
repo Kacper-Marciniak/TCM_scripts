@@ -13,12 +13,13 @@ from skimage.morphology import closing, square
 from skimage.color import label2rgb
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import random
 
 from itertools import combinations
 import xml.etree.cElementTree as ET
 
-DATA_FOLDER_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043'
-ML_PATH = r'C:\Users\Konrad\tcm_scan\20210621_092043_data\images'
+DATA_FOLDER_PATH =  r'H:\Konrad\tcm_scan_2\20210629_090202'
+ML_PATH = r'H:\Konrad\tcm_scan_2\20210629_090202_data'
 
 DATA_FOLDER_PATH_images =  DATA_FOLDER_PATH + r'\images'
 DATA_FOLDER_PATH_annotations =  DATA_FOLDER_PATH + r'\annotations\xmls' 
@@ -145,11 +146,13 @@ def kapur_threshold(image):
 
 
 
-files = list(os.listdir(DATA_FOLDER_PATH))
+
+
+files = list(os.listdir(DATA_FOLDER_PATH_images))
 for i,image_name in enumerate(files):
-    
-    if((i>=0 and i<=50) or (i>=1000 and i<=1050) or (i>=2000 and i<=2050) or (i>=2700 and i<=2750)):
-        img_path = DATA_FOLDER_PATH +'\\'+ image_name
+
+    if(i>800):
+        img_path = DATA_FOLDER_PATH_images +'\\'+ image_name
         img = cv.imread(img_path,-1)
         try:
             img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)    
@@ -157,6 +160,7 @@ for i,image_name in enumerate(files):
             print("Image not found")
             sys.exit(1)
         tresh_otsu(img,image_name)
+        print("Processed images: {}/{}".format(i,len(files)))
  
-    print("Processed images: {}/{}".format(i,len(files)))
+    
     

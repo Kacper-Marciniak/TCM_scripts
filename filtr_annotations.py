@@ -6,8 +6,8 @@ import pandas as pd
 import sys
 from shutil import copyfile
 
-DATA_FOLDER_PATH =  r'C:\Users\Konrad\tcm_scan\20210621_092043'
-ML_PATH = r'C:\Users\Konrad\tcm_scan\20210621_092043_data'
+DATA_FOLDER_PATH =  r'H:\Konrad\tcm_scan_2\20210629_090202'
+ML_PATH = r'H:\Konrad\tcm_scan_2\20210629_090202_data'
 
 
 # ML_PATH
