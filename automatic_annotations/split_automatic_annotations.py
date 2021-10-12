@@ -5,6 +5,8 @@ import cv2 as cv
 
 ML_PATH = r'H:\Konrad\tcm_scan_2\20210629_090202_data'
 
+
+
 # ML_PATH
 ML_PATH_otsu_tresh = ML_PATH + r'\otsu_tresh'
 ML_PATH_otsu_tresh_F =  ML_PATH + r'\otsu_tresh_F'
@@ -15,7 +17,7 @@ ML_PATH_otsu_tooth = ML_PATH + r'\otsu_tooth'
 
 def replace_in_annotation(old,new,i):
     # opening the file in read mode
-    file = open( ML_PATH+ r'\annotations' + '\\' + subfolder + '\\' + image_name, "r")
+    file = open( ML_PATH + r'\annotations' + '\\' + subfolder + '\\' + image_name, "r")
     replacement = ""
     # using the for loop
     for line in file:
@@ -25,7 +27,7 @@ def replace_in_annotation(old,new,i):
 
     file.close()
     # opening the file in write mode
-    fout = open( ML_PATH+ r'\annotations' + '\\' + subfolder + '\\' + image_name, "w")
+    fout = open( ML_PATH + r'\annotations' + '\\' + subfolder + '\\' + image_name, "w")
     fout.write(replacement)
     fout.close()
 

@@ -18,15 +18,12 @@ import random
 from itertools import combinations
 import xml.etree.cElementTree as ET
 
-DATA_FOLDER_PATH =  r'H:\Konrad\tcm_scan_2\20210629_090202'
-ML_PATH = r'H:\Konrad\tcm_scan_2\20210629_090202_data'
+DATA_FOLDER_PATH =  r'H:\Konrad\Skany_nowe_pwr\20210920_134258'
 
 DATA_FOLDER_PATH_images =  DATA_FOLDER_PATH + r'\images'
 DATA_FOLDER_PATH_annotations =  DATA_FOLDER_PATH + r'\annotations\xmls' 
 DATA_FOLDER_PATH_otsu_tooth = DATA_FOLDER_PATH + r'\otsu_tooth'
 DATA_FOLDER_PATH_otsu_tresh = DATA_FOLDER_PATH + r'\otsu_tresh' 
-
-
 
 def create_annotation(img,image_name,xmin,ymin,xmax,ymax):
     path = DATA_FOLDER_PATH + '\\' + image_name
@@ -86,7 +83,7 @@ def tresh_otsu(image,image_name):
     # Label image regions
     label_image = label(cleared)
     # To make the background transparent, pass the value of `bg_label`,
-    # and leave `bg_color` as `None` and `kind` as `overlay`
+    # and leave `bg_color` as `None` and `kind` as `overlay`-
     image_label_overlay = label2rgb(label_image, image=image, bg_label=0)
 
     max_area_region = 0
@@ -116,7 +113,6 @@ def tresh_otsu(image,image_name):
     #plt.show()
     create_annotation(image,image_name,minc, minr, maxc, maxr)
 
-
 def kapur_threshold(image):
     """ Runs the Kapur's threshold algorithm.
     Reference:
@@ -145,13 +141,10 @@ def kapur_threshold(image):
     return np.argmax(b_entropy + f_entropy)
 
 
-
-
-
 files = list(os.listdir(DATA_FOLDER_PATH_images))
 for i,image_name in enumerate(files):
 
-    if(i>800):
+    if(random.random() > 0.5 and i>606):
         img_path = DATA_FOLDER_PATH_images +'\\'+ image_name
         img = cv.imread(img_path,-1)
         try:
