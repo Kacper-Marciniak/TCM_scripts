@@ -25,6 +25,12 @@ DATA_FOLDER_PATH_annotations =  DATA_FOLDER_PATH + r'\annotations\xmls'
 DATA_FOLDER_PATH_otsu_tooth = DATA_FOLDER_PATH + r'\otsu_tooth'
 DATA_FOLDER_PATH_otsu_tresh = DATA_FOLDER_PATH + r'\otsu_tresh' 
 
+def create_missing_catalogs():
+    if os.path.exists (DATA_FOLDER_PATH_images) == False: os.mkdir(DATA_FOLDER_PATH_images)
+    if os.path.exists (DATA_FOLDER_PATH+ r'\annotations') == False: os.mkdir(DATA_FOLDER_PATH + r'\annotations')
+    if os.path.exists (DATA_FOLDER_PATH_annotations) == False: os.mkdir(DATA_FOLDER_PATH_annotations)
+    if os.path.exists (DATA_FOLDER_PATH_otsu_tooth) == False: os.mkdir(DATA_FOLDER_PATH_otsu_tooth)
+    if os.path.exists (DATA_FOLDER_PATH_otsu_tresh) == False: os.mkdir(DATA_FOLDER_PATH_otsu_tresh)
 def create_annotation(img,image_name,xmin,ymin,xmax,ymax):
     path = DATA_FOLDER_PATH + '\\' + image_name
     base_name = image_name[:image_name.rfind('.')]
@@ -63,7 +69,6 @@ def create_annotation(img,image_name,xmin,ymin,xmax,ymax):
     f = open(xml_name, "w")
     f.write(anntoation)
     f.close()
-
 def tresh_otsu(image,image_name):
     
     DATA_FOLDER_OTSU_PATH = DATA_FOLDER_PATH_otsu_tresh + '\\' + image_name
@@ -99,13 +104,13 @@ def tresh_otsu(image,image_name):
     start = (int(minc),int(minr))
     stop = (int(maxc),int(maxr))
     
-    '''
+    
     try:
         roi = img.copy()[minr-50:maxr+50,minc-200:maxc+200]
-        cv.imwrite(DATA_FOLDER_TOOTH_PATH, roi)
+        cv.imwrite(DATA_FOLDER_TOOTH_PATH , roi)
     except:
         print("Wrong blob detected")
-    '''
+    
 
     image_label_overlay*=255
     cv.rectangle(image_label_overlay,start,stop,(0,0,255),4)
@@ -114,7 +119,6 @@ def tresh_otsu(image,image_name):
     #plt.imshow(image)
     #plt.show()
     create_annotation(image,image_name,minc, minr, maxc, maxr)
-
 def kapur_threshold(image):
     """ Runs the Kapur's threshold algorithm.
     Reference:
@@ -144,9 +148,10 @@ def kapur_threshold(image):
 
 
 files = list(os.listdir(DATA_FOLDER_PATH_images))
+create_missing_catalogs()
 for i,image_name in enumerate(files):
-
-    if(random.random() > 0.25 ):
+    
+    if(random.random() > 0.9 and i > 117):
         img_path = DATA_FOLDER_PATH_images +'\\'+ image_name
         img = cv.imread(img_path,-1)
         try:

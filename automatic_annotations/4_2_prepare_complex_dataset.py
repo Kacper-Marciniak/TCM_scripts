@@ -8,7 +8,7 @@ from shutil import copyfile
 import random
 
 
-IMAGES_TO_COPY = [r'H:\Konrad\tcm_scan\20210621_092043_data',r'H:\Konrad\tcm_scan\20210621_121539_data']
+IMAGES_TO_COPY = [r'H:\Konrad\tcm_scan\20210621_092043_data',r'H:\Konrad\Skany_nowe_pwr\pwr_a_1_20210930_100324_data']
 
 # ALL_DATA_PATH
 ALL_DATA_PATH = r'H:\Konrad\_all_traning_data'
@@ -60,8 +60,6 @@ def recreate_annotation(image_name):
 
 for ML_PATH in IMAGES_TO_COPY:
     print(ML_PATH)
-    tooth_base_number  = len(list(os.listdir(ALL_DATA_PATH + r'\val' ))) + len(list(os.listdir(ALL_DATA_PATH + r'\test' ))) + len(list(os.listdir(ALL_DATA_PATH + r'\train' )))
-    print('Existing images:',tooth_base_number)
     files = list(os.listdir(ML_PATH + r'\images'))
     print('Images to copy:',len(files))
 
@@ -75,7 +73,10 @@ for ML_PATH in IMAGES_TO_COPY:
                 deleted +=1
                 os.remove(folder +'\\'+ data)
     print("Files deleted: ",deleted)
+    tooth_base_number  = len(list(os.listdir(ALL_DATA_PATH + r'\val' ))) + len(list(os.listdir(ALL_DATA_PATH + r'\test' ))) + len(list(os.listdir(ALL_DATA_PATH + r'\train' )))
+    print('Existing images:',tooth_base_number)
 
+for ML_PATH in IMAGES_TO_COPY:
     # Copy and split images from current catalog     
     for i,image_name in enumerate(files):
         chose_path = random.randint(0, 100)

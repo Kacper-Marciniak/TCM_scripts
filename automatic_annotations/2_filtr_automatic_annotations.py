@@ -6,17 +6,7 @@ import pandas as pd
 import sys
 from shutil import copyfile
 
-DATA_FOLDER_PATH =  r'H:\Konrad\tcm_scan_2\20210629_090202'
-ML_PATH = r'H:\Konrad\tcm_scan_2\20210629_090202_data'
-
-
-# ML_PATH
-ML_PATH_otsu_tresh = ML_PATH + r'\otsu_tresh'
-ML_PATH_otsu_tresh_F =  ML_PATH + r'\otsu_tresh_F'
-ML_PATH_annotations =  ML_PATH + r'\annotations\xmls' 
-ML_PATH_images =  ML_PATH + r'\images' 
-ML_PATH_images_F =  ML_PATH + r'\images_F' 
-ML_PATH_otsu_tooth = ML_PATH + r'\otsu_tooth'
+DATA_FOLDER_PATH =  r'H:\Konrad\Skany_nowe_pwr\pwr_a_1_20210930_100324'
 
 # BASE_PATH
 DATA_FOLDER_PATH_otsu_tresh = DATA_FOLDER_PATH + r'\otsu_tresh'
@@ -24,8 +14,26 @@ DATA_FOLDER_PATH_annotations =  DATA_FOLDER_PATH + r'\annotations\xmls'
 DATA_FOLDER_PATH_images =  DATA_FOLDER_PATH + r'\images' 
 DATA_FOLDER_PATH_otsu_tooth = DATA_FOLDER_PATH + r'\otsu_tooth'
 
+# ML_PATH
+ML_PATH = DATA_FOLDER_PATH + '_data'
+ML_PATH_otsu_tresh = ML_PATH + r'\otsu_tresh'
+ML_PATH_otsu_tresh_F =  ML_PATH + r'\otsu_tresh_F'
+ML_PATH_annotations =  ML_PATH + r'\annotations\xmls' 
+ML_PATH_images =  ML_PATH + r'\images' 
+ML_PATH_images_F =  ML_PATH + r'\images_F' 
+
+
+ML_LIST = [ML_PATH_otsu_tresh,ML_PATH_otsu_tresh_F,ML_PATH_annotations,ML_PATH_images,ML_PATH_images_F]
+
+def clear_data_dir():
+    for d in ML_LIST: 
+        files = list(os.listdir(d))
+        for f in files:
+            os.remove(f)
 
 def replace_in_annotation(old,new,i):
+
+
     # opening the file in read mode
     file = open( ML_PATH_annotations + '\\' + 'tooth_' + str(i) +'.xml', "r")
     replacement = ""
@@ -41,8 +49,16 @@ def replace_in_annotation(old,new,i):
     fout.write(replacement)
     fout.close()
 
+def create_missing_catalogs():
+    if os.path.exists (ML_PATH) == False: os.mkdir(ML_PATH) 
+    if os.path.exists (ML_PATH + r'\annotations') == False: os.mkdir(ML_PATH + r'\annotations')
+    for d in ML_LIST: 
+        if os.path.exists (d) == False: os.mkdir(d)
 
 files = list(os.listdir(DATA_FOLDER_PATH_otsu_tresh))
+create_missing_catalogs()
+clear_data_dir()
+
 for i,image_name in enumerate(files):
    
     if(i>=0):   # Chose images id to check
@@ -56,7 +72,6 @@ for i,image_name in enumerate(files):
         k = cv.waitKey(0)
         if  k == ord('g'):
             copyfile(DATA_FOLDER_PATH_otsu_tresh + '\\' + image_name, ML_PATH_otsu_tresh + '\\' + 'tooth_' + str(i) +'.png') 
-            copyfile(DATA_FOLDER_PATH_otsu_tooth + '\\' + image_name, ML_PATH_otsu_tooth + '\\' + 'tooth_' + str(i) +'.png')  
             copyfile(DATA_FOLDER_PATH_images + '\\' + image_name, ML_PATH_images + '\\' + 'tooth_' + str(i) +'.png')    
 
             copyfile(DATA_FOLDER_PATH_annotations + '\\' + xml_name, ML_PATH_annotations + '\\' + 'tooth_' + str(i) +'.xml')   

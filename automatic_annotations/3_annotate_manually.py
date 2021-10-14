@@ -3,10 +3,10 @@ import cv2 as cv
 import numpy as np  
 import os
 
-
-ML_PATH = r'H:\Konrad\tcm_scan\20210621_092043_data'
+DATA_FOLDER_PATH =  r'H:\Konrad\Skany_nowe_pwr\pwr_a_1_20210930_100324'
 
 # ML_PATH
+ML_PATH = DATA_FOLDER_PATH + '_data'
 ML_PATH_annotations =  ML_PATH + r'\annotations\xmls' 
 ML_PATH_images =  ML_PATH + r'\images' 
 ML_PATH_images_F =  ML_PATH + r'\images_F' 
@@ -55,7 +55,7 @@ def create_annotation(img,image_name,xmin,ymin,xmax,ymax):
     f = open(xml_name, "w")
     f.write(anntoation)
     f.close()
-    print(anntoation)
+    #print(anntoation)
 
 
 # Creating mouse callback function  

@@ -6,7 +6,6 @@ import cv2 as cv
 ML_PATH = r'H:\Konrad\tcm_scan_2\20210629_090202_data'
 
 
-
 # ML_PATH
 ML_PATH_otsu_tresh = ML_PATH + r'\otsu_tresh'
 ML_PATH_otsu_tresh_F =  ML_PATH + r'\otsu_tresh_F'
@@ -49,7 +48,6 @@ for i,image_name in enumerate(files):
 
     copyfile(ML_PATH + r'\annotations\xmls' + '\\' + image_name, ML_PATH+ r'\annotations' + '\\' + subfolder + '\\' + image_name)
     copyfile(ML_PATH_images + '\\' + png_name , ML_PATH_images + '\\' + subfolder + '\\' + png_name)   
-    
     replace_in_annotation('\images','\images\\' + subfolder,i)
 
     cv.waitKey(0)
