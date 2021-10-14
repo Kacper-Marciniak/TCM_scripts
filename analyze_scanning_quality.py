@@ -50,7 +50,6 @@ for data_path in PATHES_LIST:
             cv2.waitKey(0)
             cv2.destroyWindow(image_name)
         
-    
         try:
             minx,miny,maxx,maxy = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy())
             minx,miny,maxx,maxy = int(minx),int(miny),int(maxx),int(maxy)

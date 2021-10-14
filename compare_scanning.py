@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 PATH = r'H:\Konrad\broach_comparison\A1'
 PX2MM = 602.98
 
-
 files = list(os.listdir(PATH))
 
 df = []

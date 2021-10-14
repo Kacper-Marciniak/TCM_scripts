@@ -18,7 +18,7 @@ import random
 from itertools import combinations
 import xml.etree.cElementTree as ET
 
-DATA_FOLDER_PATH =  r'H:\Konrad\Skany_nowe_pwr\20210920_134258'
+DATA_FOLDER_PATH =  r'H:\Konrad\Skany_nowe_pwr\pwr_a_1_20210930_100324'
 
 DATA_FOLDER_PATH_images =  DATA_FOLDER_PATH + r'\images'
 DATA_FOLDER_PATH_annotations =  DATA_FOLDER_PATH + r'\annotations\xmls' 
@@ -66,8 +66,8 @@ def create_annotation(img,image_name,xmin,ymin,xmax,ymax):
 
 def tresh_otsu(image,image_name):
     
-    DATA_FOLDER_OTSU_PATH = DATA_FOLDER_PATH_otsu_tooth + '\\' + image_name
-    DATA_FOLDER_TOOTH_PATH = DATA_FOLDER_PATH_otsu_tresh + '\\' + image_name
+    DATA_FOLDER_OTSU_PATH = DATA_FOLDER_PATH_otsu_tresh + '\\' + image_name
+    DATA_FOLDER_TOOTH_PATH = DATA_FOLDER_PATH_otsu_tooth + '\\' + image_name
     
     if(os.path.exists(DATA_FOLDER_OTSU_PATH)): 
         print("File {} exist".format(image_name))
@@ -99,11 +99,13 @@ def tresh_otsu(image,image_name):
     start = (int(minc),int(minr))
     stop = (int(maxc),int(maxr))
     
+    '''
     try:
         roi = img.copy()[minr-50:maxr+50,minc-200:maxc+200]
         cv.imwrite(DATA_FOLDER_TOOTH_PATH, roi)
     except:
         print("Wrong blob detected")
+    '''
 
     image_label_overlay*=255
     cv.rectangle(image_label_overlay,start,stop,(0,0,255),4)
@@ -144,7 +146,7 @@ def kapur_threshold(image):
 files = list(os.listdir(DATA_FOLDER_PATH_images))
 for i,image_name in enumerate(files):
 
-    if(random.random() > 0.5 and i>606):
+    if(random.random() > 0.25 ):
         img_path = DATA_FOLDER_PATH_images +'\\'+ image_name
         img = cv.imread(img_path,-1)
         try:
