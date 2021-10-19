@@ -1,10 +1,14 @@
+# Used for segmention teeth from the background
+#  
+# Create automatic annotations based on kapur treshold. It helps to annotate images faster.
+# In some broaches efficiency is close to the 90%, it depends mostly on structure 
+# Annotated images require manual validation ----> 2_filtr_automatic_annotations.py
 import os
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
 import pandas as pd
 import sys
-
 from skimage import data
 from skimage.filters import threshold_otsu
 from skimage.segmentation import clear_border
@@ -14,11 +18,15 @@ from skimage.color import label2rgb
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import random
-
 from itertools import combinations
 import xml.etree.cElementTree as ET
 
+# List of the folders for automatic annotation
+PATH_LIST = [r'H:\Konrad\Skany_nowe_pwr\pwr_a_1_20210930_100324',r'H:\Konrad\Skany_nowe_pwr\pwr_b_1_20210930_131438',r'H:\Konrad\Skany_nowe_pwr\pwr_c_1_20211001_095602',
+            r'H:\Konrad\tcm_scan\20210623_101921',r'H:\Konrad\tcm_scan\20210621_092043',r'H:\Konrad\tcm_scan\20210621_121539']
+
 DATA_FOLDER_PATH =  r'H:\Konrad\Skany_nowe_pwr\pwr_a_1_20210930_100324'
+
 
 DATA_FOLDER_PATH_images =  DATA_FOLDER_PATH + r'\images'
 DATA_FOLDER_PATH_annotations =  DATA_FOLDER_PATH + r'\annotations\xmls' 
@@ -104,13 +112,13 @@ def tresh_otsu(image,image_name):
     start = (int(minc),int(minr))
     stop = (int(maxc),int(maxr))
     
-    
+    '''
     try:
         roi = img.copy()[minr-50:maxr+50,minc-200:maxc+200]
         cv.imwrite(DATA_FOLDER_TOOTH_PATH , roi)
     except:
         print("Wrong blob detected")
-    
+    '''
 
     image_label_overlay*=255
     cv.rectangle(image_label_overlay,start,stop,(0,0,255),4)
@@ -148,10 +156,11 @@ def kapur_threshold(image):
 
 
 files = list(os.listdir(DATA_FOLDER_PATH_images))
+print('Number of images:',len(files))
 create_missing_catalogs()
 for i,image_name in enumerate(files):
     
-    if(random.random() > 0.9 and i > 117):
+    if(random.random() > 0.9 and i >= 0 ):
         img_path = DATA_FOLDER_PATH_images +'\\'+ image_name
         img = cv.imread(img_path,-1)
         try:

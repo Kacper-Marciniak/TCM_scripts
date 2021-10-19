@@ -40,9 +40,12 @@ def get_and_check(root, name, length):
 
 def get_filename_as_int(filename):
     try:
+
         filename = filename.replace("\\", "/")
+
         filename = filename.split('.')[0]
-        filename = filename.split('_')[1]
+  
+        filename = filename[filename.rfind('tooth_')+6:]
 
       
         return int(filename)
@@ -163,11 +166,12 @@ if __name__ == "__main__":
 
 '''
 
-python xml2coco.py C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\train C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\annotations_train.json
+python 5_xml2coco.py H:\Konrad\_all_traning_data\annotations\train H:\Konrad\_all_traning_data\annotations\annotations_train.json
 
-python xml2coco.py C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\val C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\annotations_val.json
+python 5_xml2coco.py H:\Konrad\_all_traning_data\annotations\val H:\Konrad\_all_traning_data\annotations\annotations_val.json
 
-python xml2coco.py C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\test C:\Users\Konrad\tcm_scan\20210621_092043_data\annotations\annotations_test.json
+python 5_xml2coco.py H:\Konrad\_all_traning_data\annotations\test H:\Konrad\_all_traning_data\annotations\annotations_test.json
 
 
 '''
+

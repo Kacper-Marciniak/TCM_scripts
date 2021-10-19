@@ -7,8 +7,10 @@ import sys
 from shutil import copyfile
 import random
 
+PATH_LIST = [r'H:\Konrad\Skany_nowe_pwr\pwr_a_1_20210930_100324',r'H:\Konrad\Skany_nowe_pwr\pwr_b_1_20210930_131438',r'H:\Konrad\Skany_nowe_pwr\pwr_c_1_20211001_095602',
+            r'H:\Konrad\tcm_scan\20210623_101921',r'H:\Konrad\tcm_scan\20210621_092043',r'H:\Konrad\tcm_scan\20210621_121539',r'H:\Konrad\tcm_scan\20210621_092043']
 
-IMAGES_TO_COPY = [r'H:\Konrad\tcm_scan\20210621_092043_data',r'H:\Konrad\Skany_nowe_pwr\pwr_a_1_20210930_100324_data']
+IMAGES_TO_COPY = [r'H:\Konrad\Skany_nowe_pwr\pwr_a_1_20210930_100324_data']
 
 # ALL_DATA_PATH
 ALL_DATA_PATH = r'H:\Konrad\_all_traning_data'
@@ -73,12 +75,16 @@ for ML_PATH in IMAGES_TO_COPY:
                 deleted +=1
                 os.remove(folder +'\\'+ data)
     print("Files deleted: ",deleted)
-    tooth_base_number  = len(list(os.listdir(ALL_DATA_PATH + r'\val' ))) + len(list(os.listdir(ALL_DATA_PATH + r'\test' ))) + len(list(os.listdir(ALL_DATA_PATH + r'\train' )))
-    print('Existing images:',tooth_base_number)
+
 
 for ML_PATH in IMAGES_TO_COPY:
-    # Copy and split images from current catalog     
+    # Copy and split images from current catalog 
+    files = list(os.listdir(ML_PATH + r'\images'))
+    tooth_base_number  = len(list(os.listdir(ALL_DATA_PATH + r'\val' ))) + len(list(os.listdir(ALL_DATA_PATH + r'\test' ))) + len(list(os.listdir(ALL_DATA_PATH + r'\train' )))   
+    print('Existing images:',tooth_base_number) 
     for i,image_name in enumerate(files):
+
+        path = ML_PATH[ML_PATH.rfind('\\')+1:]
         chose_path = random.randint(0, 100)
         subfolder = ''
         
@@ -89,7 +95,7 @@ for ML_PATH in IMAGES_TO_COPY:
         else:
             subfolder = 'test' 
 
-        #print(ML_PATH + r'\images' + '\\' + image_name, " ---------> ", ALL_DATA_PATH + '\\'+ subfolder + '\\'+ path + '_tooth_' + str(tooth_base_number + i) + '.png') 
+        print(ML_PATH + r'\images' + '\\' + image_name, " ---------> ", ALL_DATA_PATH + '\\'+ subfolder + '\\'+ path + '_tooth_' + str(tooth_base_number + i) + '.png') 
         copyfile(ML_PATH + r'\images' + '\\' + image_name,ALL_DATA_PATH + '\\'+ subfolder + '\\'+ path + '_tooth_' + str(tooth_base_number + i) + '.png')
         recreate_annotation(image_name)
         cv.waitKey(0)

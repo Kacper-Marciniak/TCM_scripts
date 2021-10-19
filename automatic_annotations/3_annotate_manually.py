@@ -3,7 +3,10 @@ import cv2 as cv
 import numpy as np  
 import os
 
-DATA_FOLDER_PATH =  r'H:\Konrad\Skany_nowe_pwr\pwr_a_1_20210930_100324'
+PATH_LIST = [r'H:\Konrad\Skany_nowe_pwr\pwr_a_1_20210930_100324',r'H:\Konrad\Skany_nowe_pwr\pwr_b_1_20210930_131438',r'H:\Konrad\Skany_nowe_pwr\pwr_c_1_20211001_095602',
+            r'H:\Konrad\tcm_scan\20210623_101921',r'H:\Konrad\tcm_scan\20210621_092043',r'H:\Konrad\tcm_scan\20210621_121539']
+
+DATA_FOLDER_PATH =  PATH_LIST[0]
 
 # ML_PATH
 ML_PATH = DATA_FOLDER_PATH + '_data'
@@ -101,5 +104,4 @@ for i,image_name in enumerate(files):
     create_annotation(img,image_name,xmin,ymin,xmax,ymax)
     print(ML_PATH_images_F + '\\'+image_name,'---------->',ML_PATH_images + '\\'+image_name)
     cv.imwrite(ML_PATH_images + '\\'+ image_name,img)
-    os.remove(ML_PATH_images_F + '\\'+ image_name)
-    cv.destroyAllWindows()  
+    os.remove(ML_PATH_images_F + '\\'+ image_name)  
