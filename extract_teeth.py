@@ -12,25 +12,29 @@ import pandas as pd
 import cv2 as cv
 import numpy as np
 
+
 # List of the folders to process
 # r'H:\Konrad\tcm_scan\20210621_092043',  ,r'H:\Konrad\Skany_nowe_pwr\pwr_a_2_20210930_104835',r'H:\Konrad\Skany_nowe_pwr\pwr_a_3_20210930_113354'
 PATHES_LIST =  [r'H:\Konrad\tcm_scan\20210621_092043',r'H:\Konrad\Skany_nowe_pwr\pwr_a_1_20210930_100324']
 NUM_SAMPLES = 9999
 DISPLAY = False
 
-# Model loading and configuration
-config_file_path = r'C:\Users\Konrad\TCM_scripts\output\config.yml' # from google colab
-weights_path = r'C:\Users\Konrad\TCM_scripts\output\model_final.pth' # from google colab
-model = config_file_path
 cfg = get_cfg()
-cfg.merge_from_file(config_file_path)
-cfg.MODEL.WEIGHTS = weights_path
-cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.65
+cfg.OUTPUT_DIR =  r"D:\Konrad\TCM_scan\training_extraction\output"
+cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.75  # set the testing threshold for this model
 predictor = DefaultPredictor(cfg)
+
+def create_missing_catalogs():
+    if os.path.exists (data_path + r'\otsu_tooth') == False: os.mkdir(data_path+ r'\otsu_tooth')
+
+
+
 
 # Iterate over folders and process each image, save results to csv 
 for data_path in PATHES_LIST:
     print("Processing:",data_path)
+    create_missing_catalogs()
     min_x,min_y,max_x,max_y,name=[],[],[],[],[]
     files = list(os.listdir(data_path + r'\images'))
     print(files[:10])
@@ -45,7 +49,7 @@ for data_path in PATHES_LIST:
             MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).thing_classes = ['tooth']
             v = Visualizer(im[:, :, ::-1],
                         MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), 
-                        scale = 0.3,
+                        scale=0.3,
                         instance_mode = ColorMode.SEGMENTATION)
             v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
             cv2.imshow(image_name,v.get_image()[:, :, ::-1])
