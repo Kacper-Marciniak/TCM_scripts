@@ -83,15 +83,13 @@ for data_path in PATHES_LIST:
     print(" ")
     print("Processing:",data_path)
     min_x,min_y,max_x,max_y,x,y,xmm,ymm,n,name=[],[],[],[],[],[],[],[],[],[]
-    files = list(os.listdir(data_path)) ##################################tu zmienilem WS
-    #iles = list(os.listdir(data_path + r'\images'))
+    files = list(os.listdir(data_path + r'\images'))
     print(files[:10])
     for i,image_name in enumerate(files):
         
         
         if i > NUM_SAMPLES: break
-        img_path = data_path + '\\'+image_name
-        #img_path = data_path + r'\images' +'\\'+ image_name ##################################tu zmienilem WS
+        img_path = data_path + r'\images' + '\\' + image_name 
         im = cv2.imread(img_path)
         outputs = predictor(im)
         #print(outputs)
@@ -109,7 +107,7 @@ for data_path in PATHES_LIST:
         
         try:
             minx,miny,maxx,maxy = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy())
-            minx,miny,maxx,maxy = int(minx),int(miny),int(maxx),int(maxy)
+            #minx,miny,maxx,maxy = int(minx),int(miny),int(maxx),int(maxy)
             min_x.append(minx)
             max_x.append(maxx)
             min_y.append(miny)
@@ -118,7 +116,7 @@ for data_path in PATHES_LIST:
             y.append(maxy-miny)
             xmm.append((maxx-minx)/603)
             ymm.append((maxy-miny)/603)
-            n.append((i%96)+1)
+            n.append((i % 96)+1)
             name.append(image_name)
         except:
             print("Error in tooth:",image_name)
