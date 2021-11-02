@@ -10,24 +10,30 @@ import numpy as np
 from skimage import io
 import math
 
-df = pd.read_csv(r'D:\Konrad\TCM_scan\dash\pwr_a_1_20210930_100324.csv')
 
-default_clickeData = ''
+BROACH_CSV = r'D:\Konrad\TCM_scan\dash'
+BROACH_DIR = r'D:\Konrad\TCM_scan\dash_skany'
+BROACH_LIST = os.listdir(BROACH_DIR)
+df = pd.read_csv(BROACH_CSV + '\\' + BROACH_LIST[0] + '.csv')  # Deafoult broach
+print(df[:3]) # Show few data in console
 
-print(df[:3]) #show few data
 # Preparing values for axis markers
 available_x_indicators = df['w_id'].unique()
-
 displayed_x_indicators = available_x_indicators[0:len(available_x_indicators)] 
 available_y_indicators = df['l_id'].unique()
 available_y_indicators.sort()
 displayed_y_indicators = available_y_indicators[0:len(available_y_indicators)] 
 
+# Available view modes
 available_dropdown_indicators = ['Orginalny', 'Wyodrebniony', 'Segmentacja']
 SUBFOLDERS = [r'\images', r'\otsu_tooth', r'\otsu_tooth']
 
+# Available heatmap modes
 available_color_indicators = ['Długość', 'Szerokość', 'Położenie środka - długość', 'Położenie środka - szerokość', 'Pole wyodrębnionej części']
 COLORS = ['l', 'w','c_l', 'c_w', 'l']
+
+# Available broaches
+available_broach_indicators = BROACH_LIST
 
 print(displayed_x_indicators)
 print(displayed_y_indicators)
@@ -53,21 +59,40 @@ app.layout = html.Div([
     # Options
     html.Div([  
         html.Div([
-            html.H1('Opcje'),
-            html.H2('Wartość na wykresie:'),
-            dcc.Dropdown(
-                id='img_color',
+            html.Div([
+                 html.H1('Opcje'),
+                html.H2('Wybór przecigacza:'),
+                dcc.Dropdown(
+                id='broach',
+                options=[{'label': i, 'value': i} for i in available_broach_indicators],
+                value = available_broach_indicators[0]),
+                html.H2('Wartość na wykresie:'),
+                dcc.Dropdown(
+                id = 'img_color',
                 options=[{'label': i, 'value': i} for i in available_color_indicators],
                 value = available_color_indicators[1]),
-            html.H2('Aktywne typ wad:'),
-            dcc.Checklist(
+                html.H2('Rysuj wady:'),
+                dcc.Checklist(
                 options=[
-                    {'label': 'New York City', 'value': 'NYC'},
-                    {'label': u'Montréal', 'value': 'MTL'},
-                    {'label': 'San Francisco', 'value': 'SF'}
-                    ],value=['MTL', 'SF']),
-            ],style={'width': '40%','float': 'left', 'display': 'inline-block'})
-        ],style={'width': '32%','float': 'left', 'display': 'inline-block','margin-left': '50px'}), 
+                    {'label': 'stępienie', 'value': 'S'},
+                    {'label': 'narost', 'value': 'N'},
+                    {'label': 'wykruszenie', 'value': 'W'}
+                    ],
+                    value=['narost', 'N']),
+                ],style={'width': '90%','height': '535px','float': 'left', 'display': 'inline-block','margin-left': '20px','margin-right': '20px'})
+            ],style={'width': '90%','float': 'left', 'display': 'inline-block','background':'rgb(234, 234, 242)','margin-left': '40px','margin-right': '40px'})
+        ],style={'width': '16%','height': '90%','float': 'left', 'display': 'inline-block'}), 
+  # Info
+    html.Div([  
+        html.Div([
+            html.Div([
+                html.H1('Informacje'),
+                    'wysokość:\n'
+                    'szerokość:\n'
+                    'pole:\n' 
+                ],style={'width': '90%','height':'535px','float': 'left', 'display': 'inline-block','margin-left': '20px','margin-right': '20px'})
+            ],style={'width': '90%','float': 'left', 'display': 'inline-block'})
+        ],style={'width': '16%','float': 'left', 'display': 'inline-block','margin-left': '40px','background':'rgb(234, 234, 242)'}),        
     # Image 1
     html.Div([
         html.Div([
@@ -84,6 +109,7 @@ app.layout = html.Div([
         ],style={'width': '32%', 'display': 'inline-block'}),  
     #Image 2
     html.Div([
+
         html.Div([
             dcc.Dropdown(
                 id='image2d',
@@ -95,34 +121,34 @@ app.layout = html.Div([
             html.H2(id='title2')
             ],style={'textAlign': 'center'}),
         dcc.Graph(id='image2g'), 
-        ],style={'width': '32%','float': 'right', 'display': 'inline-block'})         
+        ],style={'width': '32%','float': 'right', 'display': 'inline-block'}),         
 ])
 
 
 @app.callback(
     Output('graph-with-slider', 'figure'),
     [Input('position-slider', 'value'),
-     Input('img_color', 'value')]
+     Input('img_color', 'value'),
+     Input('broach', 'value')]
     )
-def update_scatter(value,categoryPick):
+def update_scatter(value,categoryPick,FOLDER_NAME):
+    df = pd.read_csv(BROACH_CSV + '\\' + FOLDER_NAME + '.csv')
     filtered_df = df[ (df['w_id'] <= value[1]) & (df['w_id'] >= value[0]) ]
     c = COLORS[ available_color_indicators.index(categoryPick)]
-    print(c)
     fig = px.scatter(filtered_df, 
-                    x = "w_id", 
-                    y = "l_id", 
-                    color = c,
-                    hover_name = "img_name",
-                    log_x = False, 
-                    size_max = 150,)
+                      x = "w_id", 
+                      y = "l_id", 
+                      color = c,
+                      hover_name = "img_name",
+                      log_x = False)
     fig.update_layout(transition_duration = 200, 
-                    height = 500, template="seaborn",
-                    yaxis=dict(title_text="WIDTH [mm]", titlefont=dict(size=20), tickvals = displayed_y_indicators),
-                    xaxis=dict(title_text="LENGHT [mm]", titlefont=dict(size=20), tickvals = displayed_x_indicators),
-                    margin=dict(l = 20, r = 20, t = 5, b = 30))
-    fig.update_traces(marker=dict(size=25,
-                      line=dict(width=2, color='DarkSlateGrey')),
-                      selector=dict(mode='markers'))
+                      height = 600, template = "seaborn",
+                      yaxis=dict(title_text = "WIDTH [mm]", titlefont=dict(size=20), tickvals = displayed_y_indicators),
+                      xaxis=dict(title_text = "LENGHT [mm]", titlefont=dict(size=20), tickvals = displayed_x_indicators),
+                      margin=dict(l = 10, r = 10, t = 3, b = 3))
+    fig.update_traces(marker=dict(size=15,
+                                  line=dict(width=1, color='DarkSlateGrey')),
+                                  selector=dict(mode='markers'))
     return fig
 
 
@@ -130,37 +156,45 @@ def update_scatter(value,categoryPick):
     [Output('image1g', 'figure'),
      Output('title1', 'children')],
     [Input('graph-with-slider', 'clickData'),
-     Input('image1d','value')]
+     Input('image1d','value'),
+     Input('broach', 'value')],
     )
-def update_image(clickData,value):
-
+def update_image(clickData,value,FOLDER_NAME):
     SUBFOLDER = SUBFOLDERS[ available_dropdown_indicators.index(value)]
-    DATA_FOLDER_PATH =  r'D:\Konrad\TCM_scan\Skany_nowe_pwr\pwr_a_1_20210930_100324' + SUBFOLDER
+    DATA_FOLDER_PATH =  BROACH_DIR + '\\' + FOLDER_NAME + '\\' + SUBFOLDER
     IMAGE_NAME = str(clickData['points'][0]['hovertext'])
     FULL_PATH = DATA_FOLDER_PATH + '\\' + IMAGE_NAME 
-    print(SUBFOLDER,IMAGE_NAME)
+    print(FULL_PATH)
     img = io.imread(FULL_PATH)
     fig = px.imshow(img)
-    fig.update_layout(template="none",xaxis=dict(showgrid=False, showline=False,visible=False),yaxis=dict(showgrid=False, showline=False, visible=False))
+    fig.update_layout(template="none",
+                      xaxis=dict(showgrid = False, showline = False, visible = False), 
+                      yaxis = dict(showgrid = False, showline = False, visible = False),  
+                      margin=dict(l=10, r=10, b=0, t=0, pad=10))
     return fig, IMAGE_NAME
 
 @app.callback(
     [Output('image2g', 'figure'),
      Output('title2', 'children')],
     [Input('graph-with-slider', 'clickData'),
-     Input('image2d','value')]
+     Input('image2d','value'),
+     Input('broach', 'value')]
     )
-def update_image(clickData,value):
+def update_image(clickData,value,FOLDER_NAME):
     SUBFOLDER = SUBFOLDERS[ available_dropdown_indicators.index(value)]
-    DATA_FOLDER_PATH =  r'D:\Konrad\TCM_scan\Skany_nowe_pwr\pwr_a_1_20210930_100324' + SUBFOLDER
+    DATA_FOLDER_PATH =  BROACH_DIR + '\\' + FOLDER_NAME + '\\' + SUBFOLDER
     IMAGE_NAME = str(clickData['points'][0]['hovertext'])
     FULL_PATH = DATA_FOLDER_PATH + '\\' + IMAGE_NAME 
     img = io.imread(FULL_PATH)
     fig = px.imshow(img)
-    fig.update_layout(template="none",xaxis=dict(showgrid=False, showline=False,visible=False),yaxis=dict(showgrid=False, showline=False, visible=False))
+    fig.update_layout(template="none",
+                      xaxis=dict(showgrid = False, showline = False, visible = False), 
+                      yaxis = dict(showgrid = False, showline = False, visible = False),  
+                      margin=dict(l=10, r=40, b=0, t=0, pad=10))
     return fig, IMAGE_NAME
 
 
+    
 
 if __name__ == '__main__':
     app.run_server(debug=False)

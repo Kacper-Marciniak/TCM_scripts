@@ -19,7 +19,8 @@ from detectron2.engine import DefaultTrainer
 from detectron2.evaluation import COCOEvaluator
 
 
-PATHES_LIST =  [r'D:\Konrad\TCM_scan\Skany_nowe_pwr\pwr_a_1_20210930_100324',+
+PATHES_LIST =  [r'D:\Konrad\TCM_scan\dash_skany\pwr_b_1_20210930_131438',
+                r'D:\Konrad\TCM_scan\Skany_nowe_pwr\pwr_a_1_20210930_100324',
                 r'D:\Konrad\TCM_scan\MSA_WS\MSA_rr\pwr_c_odtwarzalnosc_2_ws',
                 r'D:\Konrad\TCM_scan\MSA_WS\MSA_rr\pwr_c_odtwarzalnosc_3_ws',
                 r'D:\Konrad\TCM_scan\MSA_WS\MSA_rr\pwr_c_odtwarzalnosc_4_kc',
@@ -82,13 +83,14 @@ for data_path in PATHES_LIST:   # Iterate over folders
 
         # Information about the tooth: width, lenght, centre coordinates
         im = cv2.imread(data_path + r'/images/' + image_name)
-        outputs = extraction_predictor(im)
-        minx, miny, maxx, maxy = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy())
-        l.append(maxy - miny)
-        w.append(maxx - minx)
-        c_l.append((maxy + miny)/2)
-        c_w.append((maxx + minx)/2)
+
         try:
+            outputs = extraction_predictor(im)
+            minx, miny, maxx, maxy = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy())
+            l.append(maxy - miny)
+            w.append(maxx - minx)
+            c_l.append((maxy + miny)/2)
+            c_w.append((maxx + minx)/2)
             roi = im.copy()[int(miny)-50:int(maxy)+50, int(minx)-200:int(maxx)+200] 
             print(image_name)
             cv.imwrite(data_path + r'\otsu_tooth' + '\\' + image_name , roi)
@@ -100,3 +102,4 @@ for data_path in PATHES_LIST:   # Iterate over folders
     CSV_NAME = CSV_NAME[CSV_NAME.rfind('\\') + 1:] + '.csv'
     df = pd.DataFrame(data, columns= ['img_name','l_id', 'w_id','color','l', 'w', 'c_l', 'c_w'])  
     df.to_csv (DASH_PATH + '\\' + CSV_NAME, index = False, header=True)
+f
