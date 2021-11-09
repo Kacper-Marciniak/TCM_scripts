@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from skimage import io
 import math
+import cv2 as cv
 
 
 BROACH_CSV = r'D:\Konrad\TCM_scan\dash'
@@ -29,8 +30,8 @@ available_dropdown_indicators = ['Orginalny', 'Wyodrebniony', 'Segmentacja']
 SUBFOLDERS = [r'\images', r'\otsu_tooth', r'\otsu_tooth']
 
 # Available heatmap modes
-available_color_indicators = ['Długość', 'Szerokość', 'Położenie środka - długość', 'Położenie środka - szerokość', 'Pole wyodrębnionej części']
-COLORS = ['l', 'w','c_l', 'c_w', 'l']
+available_color_indicators = ['Długość', 'Szerokość', 'Położenie środka - długość', 'Położenie środka - szerokość', 'Ilość wad']
+COLORS = ['l', 'w','c_l', 'c_w', 'inst_num']
 
 # Available broaches
 available_broach_indicators = BROACH_LIST
@@ -49,18 +50,18 @@ app.layout = html.Div([
     html.Div([
         dcc.Graph(id='graph-with-slider'),
         dcc.RangeSlider(
-            id='position-slider',
-            min=df['w_id'].min(),
-            max=df['w_id'].max(),
-            value=[0,df['w_id'].mean()],
-            marks={str(x): str(x) for x in displayed_x_indicators},
-            step=6 )
+            id = 'position-slider',
+            min = df['w_id'].min(),
+            max = df['w_id'].max(),
+            value = [0,df['w_id'].mean()],
+            marks = {str(x): str(x) for x in displayed_x_indicators},
+            step = 6 )
         ],style={'margin': '20px'}),
     # Options
     html.Div([  
         html.Div([
             html.Div([
-                 html.H1('Opcje'),
+                html.H1('Opcje'),
                 html.H2('Wybór przecigacza:'),
                 dcc.Dropdown(
                 id='broach',
@@ -73,16 +74,17 @@ app.layout = html.Div([
                 value = available_color_indicators[1]),
                 html.H2('Rysuj wady:'),
                 dcc.Checklist(
-                options=[
-                    {'label': 'stępienie', 'value': 'S'},
-                    {'label': 'narost', 'value': 'N'},
-                    {'label': 'wykruszenie', 'value': 'W'}
-                    ],
-                    value=['narost', 'N']),
+                    id = 'draw',
+                    options=[      
+                    {'label': 'narost\n', 'value': 1},
+                    {'label': 'stępienie\n', 'value': 2},
+                    {'label': 'zatarcie\n', 'value': 3},
+                    {'label': 'wykruszenie\n', 'value': 4}],
+                    value=[1,2,3,4]),
                 ],style={'width': '90%','height': '535px','float': 'left', 'display': 'inline-block','margin-left': '20px','margin-right': '20px'})
             ],style={'width': '90%','float': 'left', 'display': 'inline-block','background':'rgb(234, 234, 242)','margin-left': '40px','margin-right': '40px'})
         ],style={'width': '16%','height': '90%','float': 'left', 'display': 'inline-block'}), 
-  # Info
+    # Info
     html.Div([  
         html.Div([
             html.Div([
@@ -92,14 +94,14 @@ app.layout = html.Div([
                     'pole:\n' 
                 ],style={'width': '90%','height':'535px','float': 'left', 'display': 'inline-block','margin-left': '20px','margin-right': '20px'})
             ],style={'width': '90%','float': 'left', 'display': 'inline-block'})
-        ],style={'width': '16%','float': 'left', 'display': 'inline-block','margin-left': '40px','background':'rgb(234, 234, 242)'}),        
+        ],style={'width': '15%','float': 'left', 'display': 'inline-block','margin-left': '40px','margin-right': '40px','background':'rgb(234, 234, 242)'}),        
     # Image 1
     html.Div([
         html.Div([
             dcc.Dropdown(
                 id='image1d',
                 options=[{'label': i, 'value': i} for i in available_dropdown_indicators],
-                value = available_dropdown_indicators[0]),
+                value = available_dropdown_indicators[1]),
             ],style={'width': '85%','float': 'left', 'display': 'inline-block','margin-left': '50px','margin-right': '50px'}),
         html.Br(),
         html.Div([
@@ -114,7 +116,7 @@ app.layout = html.Div([
             dcc.Dropdown(
                 id='image2d',
                 options=[{'label': i, 'value': i} for i in available_dropdown_indicators],
-                value = available_dropdown_indicators[1]),
+                value = available_dropdown_indicators[2]),
             ],style={'width': '85%','float': 'left', 'display': 'inline-block','margin-left': '50px','margin-right': '50px'}),
         html.Br(),
         html.Div([
@@ -135,6 +137,7 @@ def update_scatter(value,categoryPick,FOLDER_NAME):
     df = pd.read_csv(BROACH_CSV + '\\' + FOLDER_NAME + '.csv')
     filtered_df = df[ (df['w_id'] <= value[1]) & (df['w_id'] >= value[0]) ]
     c = COLORS[ available_color_indicators.index(categoryPick)]
+    print(c)
     fig = px.scatter(filtered_df, 
                       x = "w_id", 
                       y = "l_id", 
@@ -157,15 +160,44 @@ def update_scatter(value,categoryPick,FOLDER_NAME):
      Output('title1', 'children')],
     [Input('graph-with-slider', 'clickData'),
      Input('image1d','value'),
-     Input('broach', 'value')],
+     Input('broach', 'value'),
+     Input('draw','value')],
     )
-def update_image(clickData,value,FOLDER_NAME):
+def update_image(clickData,value,FOLDER_NAME,draw_pick):
+
     SUBFOLDER = SUBFOLDERS[ available_dropdown_indicators.index(value)]
     DATA_FOLDER_PATH =  BROACH_DIR + '\\' + FOLDER_NAME + '\\' + SUBFOLDER
     IMAGE_NAME = str(clickData['points'][0]['hovertext'])
     FULL_PATH = DATA_FOLDER_PATH + '\\' + IMAGE_NAME 
-    print(FULL_PATH)
     img = io.imread(FULL_PATH)
+    
+    if(value == 'Segmentacja'): 
+        mask = output = np.zeros_like(img)
+        inst_ids = str(df.loc[df['img_name']==IMAGE_NAME, 'inst_id'])
+        inst_ids = inst_ids[inst_ids.rfind('[') + 1:]
+        inst_ids = inst_ids[:inst_ids.rfind(']')]
+        inst_ids = np.array(inst_ids.split(' '))
+        inst_num = df.loc[df['img_name']==IMAGE_NAME, 'inst_num']
+        for i in range(int(inst_num)):
+            DATA_FOLDER_PATH =  BROACH_DIR + '\\' + FOLDER_NAME + '\segmentation'  
+            BASE_NAME = IMAGE_NAME.split('.')[0]
+            FULL_PATH = DATA_FOLDER_PATH + '\\' + BASE_NAME + '-' + str(i) + '.png'
+            mask = io.imread(FULL_PATH)
+            mask = cv.bitwise_not(mask)
+            b,g,r = cv.split(img)
+            if (inst_ids[i]=='1' and (1 in draw_pick)): # blue - 'stępienie' 
+                g = cv.bitwise_and(g,cv.split(mask)[0])
+                r = cv.bitwise_and(r,cv.split(mask)[0])
+            elif(inst_ids[i]=='2'and (2 in draw_pick)): # red - 'narost'
+                g = cv.bitwise_and(g,cv.split(mask)[0])
+                b = cv.bitwise_and(b,cv.split(mask)[0])
+            elif(inst_ids[i]=='3'and (3 in draw_pick)): # green - 'zatarcie'
+                r = cv.bitwise_and(r,cv.split(mask)[0])
+                b = cv.bitwise_and(b,cv.split(mask)[0])
+            elif(inst_ids[i]=='4'and (4 in draw_pick)): # yellow - 'wykruszenie'
+                r = cv.bitwise_and(r,cv.split(mask)[0])
+            img = cv.merge([b,g,r])
+
     fig = px.imshow(img)
     fig.update_layout(template="none",
                       xaxis=dict(showgrid = False, showline = False, visible = False), 
@@ -178,21 +210,49 @@ def update_image(clickData,value,FOLDER_NAME):
      Output('title2', 'children')],
     [Input('graph-with-slider', 'clickData'),
      Input('image2d','value'),
-     Input('broach', 'value')]
+     Input('broach', 'value'),
+     Input('draw','value')]
     )
-def update_image(clickData,value,FOLDER_NAME):
+def update_image(clickData,value,FOLDER_NAME,draw_pick):
     SUBFOLDER = SUBFOLDERS[ available_dropdown_indicators.index(value)]
     DATA_FOLDER_PATH =  BROACH_DIR + '\\' + FOLDER_NAME + '\\' + SUBFOLDER
     IMAGE_NAME = str(clickData['points'][0]['hovertext'])
     FULL_PATH = DATA_FOLDER_PATH + '\\' + IMAGE_NAME 
     img = io.imread(FULL_PATH)
+    if(value == 'Segmentacja'): 
+        mask = output = np.zeros_like(img)
+        inst_ids = str(df.loc[df['img_name']==IMAGE_NAME, 'inst_id'])
+        inst_ids = inst_ids[inst_ids.rfind('[') + 1:]
+        inst_ids = inst_ids[:inst_ids.rfind(']')]
+        inst_ids = np.array(inst_ids.split(' '))
+        inst_num = df.loc[df['img_name']==IMAGE_NAME, 'inst_num']
+        for i in range(int(inst_num)):
+            DATA_FOLDER_PATH =  BROACH_DIR + '\\' + FOLDER_NAME + '\segmentation'  
+            BASE_NAME = IMAGE_NAME.split('.')[0]
+            FULL_PATH = DATA_FOLDER_PATH + '\\' + BASE_NAME + '-' + str(i) + '.png'
+            mask = io.imread(FULL_PATH)
+            mask = cv.bitwise_not(mask)
+            b,g,r = cv.split(img)
+ 
+            if (inst_ids[i]=='1' and (1 in draw_pick)): # blue - 'stępienie' 
+                g = cv.bitwise_and(g,cv.split(mask)[0])
+                r = cv.bitwise_and(r,cv.split(mask)[0])
+            elif(inst_ids[i]=='2'and (2 in draw_pick)): # red - 'narost'
+                g = cv.bitwise_and(g,cv.split(mask)[0])
+                b = cv.bitwise_and(b,cv.split(mask)[0])
+            elif(inst_ids[i]=='3'and (3 in draw_pick)): # green - 'zatarcie'
+                r = cv.bitwise_and(r,cv.split(mask)[0])
+                b = cv.bitwise_and(b,cv.split(mask)[0])
+            elif(inst_ids[i]=='4'and (4 in draw_pick)): # yellow - 'wykruszenie'
+                r = cv.bitwise_and(r,cv.split(mask)[0])
+            img = cv.merge([b,g,r])
+    
     fig = px.imshow(img)
     fig.update_layout(template="none",
                       xaxis=dict(showgrid = False, showline = False, visible = False), 
                       yaxis = dict(showgrid = False, showline = False, visible = False),  
                       margin=dict(l=10, r=40, b=0, t=0, pad=10))
     return fig, IMAGE_NAME
-
 
     
 
