@@ -1,7 +1,7 @@
 # Used for segmention teeth from the background
 #  
 # Create automatic annotations based on kapur treshold. It helps to annotate images faster.
-# In some broaches efficiency is close to the 90%, it depends mostly on structure 
+# In some broaches efficiency is close to the 90%, it depends mostly on structure of the surface
 # Annotated images require manual validation ----> 2_filtr_automatic_annotations.py
 import os
 import matplotlib.pyplot as plt

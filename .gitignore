@@ -2,3 +2,4 @@
 *.xlsx
 *.pptx
 output/
+coco_eval/
