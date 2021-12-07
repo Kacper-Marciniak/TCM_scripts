@@ -12,35 +12,33 @@ import math
 import cv2 as cv
 
 
-BROACH_CSV = r'D:\Konrad\TCM_scan\dash'
-BROACH_DIR = r'D:\Konrad\TCM_scan\dash_skany'
+BROACH_CSV = r'D:\Konrad\TCM_scan\dash' # Path to the folder with .csv files
+BROACH_DIR = r'D:\Konrad\TCM_scan\dash_skany'  # Path to the corresponding folders with images 
 BROACH_LIST = os.listdir(BROACH_DIR)
 df = pd.read_csv(BROACH_CSV + '\\' + BROACH_LIST[0] + '.csv')  # Deafoult broach
 print(df[:3]) # Show few data in console
 
-# Preparing values for axis markers
+# Preparing values for axis markers of the main scatter
 available_x_indicators = df['w_id'].unique()
 displayed_x_indicators = available_x_indicators[0:len(available_x_indicators)] 
 available_y_indicators = df['l_id'].unique()
 available_y_indicators.sort()
 displayed_y_indicators = available_y_indicators[0:len(available_y_indicators)] 
 
-# Available view modes
+# Available preview modes
 available_dropdown_indicators = ['Orginalny', 'Wyodrebniony', 'Segmentacja']
 SUBFOLDERS = [r'\images', r'\otsu_tooth', r'\otsu_tooth']
 
 # Available heatmap modes
-available_color_indicators = ['Długość', 'Szerokość', 'Położenie środka - długość', 'Położenie środka - szerokość', 'Ilość wad']
-COLORS = ['l', 'w','c_l', 'c_w', 'inst_num']
+available_color_indicators = ['Długość', 'Szerokość', 'Położenie środka - długość', 'Położenie środka - szerokość', 'Ilość wad','Stępienie','Narost','Zatarcie','Wykruszenie','Stępienie w rzedach','Wielkość stępienia']
+COLORS = ['l', 'w','c_l', 'c_w', 'inst_num','stepienie','narost','zatarcie','wykruszenie','stepienie_w_rzedach','wielkosc_stepienia']
 
 # Available broaches
 available_broach_indicators = BROACH_LIST
 
-print(displayed_x_indicators)
-print(displayed_y_indicators)
-
 app = dash.Dash(__name__)
 
+# Layout structure
 app.layout = html.Div([
     # Title
     html.Div([
@@ -94,6 +92,7 @@ app.layout = html.Div([
                     'pole:\n' 
                 ],style={'width': '90%','height':'535px','float': 'left', 'display': 'inline-block','margin-left': '20px','margin-right': '20px'})
             ],style={'width': '90%','float': 'left', 'display': 'inline-block'})
+            
         ],style={'width': '15%','float': 'left', 'display': 'inline-block','margin-left': '40px','margin-right': '40px','background':'rgb(234, 234, 242)'}),        
     # Image 1
     html.Div([
@@ -134,7 +133,9 @@ app.layout = html.Div([
      Input('broach', 'value')]
     )
 def update_scatter(value,categoryPick,FOLDER_NAME):
+ 
     df = pd.read_csv(BROACH_CSV + '\\' + FOLDER_NAME + '.csv')
+
     filtered_df = df[ (df['w_id'] <= value[1]) & (df['w_id'] >= value[0]) ]
     c = COLORS[ available_color_indicators.index(categoryPick)]
     print(c)
@@ -170,10 +171,11 @@ def update_image(clickData,value,FOLDER_NAME,draw_pick):
     IMAGE_NAME = str(clickData['points'][0]['hovertext'])
     FULL_PATH = DATA_FOLDER_PATH + '\\' + IMAGE_NAME 
     img = io.imread(FULL_PATH)
-    
+
+    # Displaying failures categories
     if(value == 'Segmentacja'): 
         mask = output = np.zeros_like(img)
-        inst_ids = str(df.loc[df['img_name']==IMAGE_NAME, 'inst_id'])
+        inst_ids = str(df.loc[df['img_name'] == IMAGE_NAME, 'inst_id'])
         inst_ids = inst_ids[inst_ids.rfind('[') + 1:]
         inst_ids = inst_ids[:inst_ids.rfind(']')]
         inst_ids = np.array(inst_ids.split(' '))
@@ -203,6 +205,7 @@ def update_image(clickData,value,FOLDER_NAME,draw_pick):
                       xaxis=dict(showgrid = False, showline = False, visible = False), 
                       yaxis = dict(showgrid = False, showline = False, visible = False),  
                       margin=dict(l=10, r=10, b=0, t=0, pad=10))
+
     return fig, IMAGE_NAME
 
 @app.callback(
@@ -219,6 +222,8 @@ def update_image(clickData,value,FOLDER_NAME,draw_pick):
     IMAGE_NAME = str(clickData['points'][0]['hovertext'])
     FULL_PATH = DATA_FOLDER_PATH + '\\' + IMAGE_NAME 
     img = io.imread(FULL_PATH)
+
+    # Displaying failures categories
     if(value == 'Segmentacja'): 
         mask = output = np.zeros_like(img)
         inst_ids = str(df.loc[df['img_name']==IMAGE_NAME, 'inst_id'])
@@ -252,6 +257,7 @@ def update_image(clickData,value,FOLDER_NAME,draw_pick):
                       xaxis=dict(showgrid = False, showline = False, visible = False), 
                       yaxis = dict(showgrid = False, showline = False, visible = False),  
                       margin=dict(l=10, r=40, b=0, t=0, pad=10))
+
     return fig, IMAGE_NAME
 
     
