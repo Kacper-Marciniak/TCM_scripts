@@ -17,7 +17,8 @@ from detectron2.evaluation import COCOEvaluator
 ##--------------------------------------------------------------------------------------------------------------------------------------------------##
 # Input parameters
 
-PATHES_LIST =  [r'D:\Konrad\TCM_scan\MSA_WS\MSA_rr\pwr_c_odtwarzalnosc_1_ws',
+PATHES_LIST =  [r'D:\Konrad\TCM_scan\MSA_WS\MSA_type1',
+                r'D:\Konrad\TCM_scan\MSA_WS\MSA_rr\pwr_c_odtwarzalnosc_1_ws',
                 r'D:\Konrad\TCM_scan\MSA_WS\MSA_rr\pwr_c_odtwarzalnosc_2_ws',
                 r'D:\Konrad\TCM_scan\MSA_WS\MSA_rr\pwr_c_odtwarzalnosc_3_ws',
                 r'D:\Konrad\TCM_scan\MSA_WS\MSA_rr\pwr_c_odtwarzalnosc_4_kc',
@@ -67,7 +68,7 @@ cfg.SOLVER.WARMUP_ITERS = 1000
 cfg.SOLVER.MAX_ITER = 300 #adjust up if val mAP is still rising, adjust down if overfit
 cfg.SOLVER.STEPS = (1000, 1500)
 cfg.SOLVER.GAMMA = 0.05
-cfg.OUTPUT_DIR =  r"D:\Konrad\TCM_scan\model_temp_output"
+cfg.OUTPUT_DIR =  r"D:\Konrad\TCM_scan\training_extraction\output"
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 64
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1
 cfg.TEST.EVAL_PERIOD = 500
