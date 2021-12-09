@@ -170,10 +170,12 @@ for data_path in PATHES_LIST:   # Iterate over folders
     print("Processing:",data_path)
     print("Number of images:", len(files))
 
-    min_x, min_y, max_x, max_y = [],[],[],[]
-    l, w, c_l, c_w = [],[],[],[] #tooth lenght, tooth width, tooth center coordiante - lenght, tooth center coordinate - width
+    # Containers for stored values
     l_id, w_id, img_name = [],[],[]
+    min_x, min_y, max_x, max_y = [],[],[],[]
+    l, w, c_l, c_w = [],[],[],[] 
     inst_num, scores, inst_id, blunt_values = [],[],[],[]
+
     for image_name in files: # Iterate over files
         base_name = image_name[:image_name.rfind('.')]
         split_name = base_name.split('_')
@@ -186,29 +188,30 @@ for data_path in PATHES_LIST:   # Iterate over folders
             # Extracting toooth
             outputs = extraction_predictor(im)
             minx, miny, maxx, maxy = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy())
-            roi = im.copy()[int(miny)-50:int(maxy)+50, int(minx)-200:int(maxx)+200]     
+            roi = im.copy()[int(miny)-50:int(maxy)+50, int(minx)-100:int(maxx)+100]     
             cv.imwrite(data_path + r'\otsu_tooth' + '\\' + image_name , roi)
+            num_instances, pred_class, score, blunt_value = decode_segmentation(roi, image_name)
 
             # Preparing data for dataframe
-            num_instances, pred_class, score, blunt_value = decode_segmentation(roi, image_name)
-            l.append(maxy - miny)
-            w.append(maxx - minx)
-            blunt_values.append(blunt_value)
-            c_l.append((maxy + miny)/2)
-            c_w.append((maxx + minx)/2)
+            img_name.append(str(image_name))
             l_id.append(int(split_name[0]))
             w_id.append(int(split_name[1]))
-            img_name.append(str(image_name))
-            inst_num.append(str(num_instances))
-            scores.append(str(score))
-            inst_id.append(str(pred_class))
             min_x.append(int(minx))
             min_y.append(int(miny))
             max_x.append(int(maxx)) 
-            max_y.append(int(maxy))   
-              
+            max_y.append(int(maxy))              
+            l.append(maxy - miny)
+            w.append(maxx - minx)
+            c_l.append((maxy + miny)/2)
+            c_w.append((maxx + minx)/2)   
+            inst_num.append(str(num_instances))
+            scores.append(str(score))
+            inst_id.append(str(pred_class))
+            blunt_values.append(blunt_value)
+         
         except:
             print("Extraction error in tooth:",image_name)
+            
         
     print("Saving") 
     print(blunt_values) 
