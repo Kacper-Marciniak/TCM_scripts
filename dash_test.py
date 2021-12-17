@@ -30,8 +30,8 @@ available_dropdown_indicators = ['Orginalny', 'Wyodrebniony', 'Segmentacja']
 SUBFOLDERS = [r'\images', r'\otsu_tooth', r'\otsu_tooth']
 
 # Available heatmap modes
-available_color_indicators = ['Długość', 'Szerokość', 'Położenie środka - długość', 'Położenie środka - szerokość', 'Ilość wad','Stępienie','Narost','Zatarcie','Wykruszenie','Stępienie w rzedach','Wielkość stępienia']
-COLORS = ['l', 'w','c_l', 'c_w', 'inst_num','stepienie','narost','zatarcie','wykruszenie','stepienie_w_rzedach','wielkosc_stepienia']
+available_color_indicators = ['Długość', 'Szerokość', 'Położenie środka - długość', 'Położenie środka - szerokość', 'Ilość wad','Stępienie', 'Narost', 'Zatarcie', 'Wykruszenie', 'Stępienie w rzedach', 'Wielkość stępienia']
+COLORS = ['l', 'w','c_l', 'c_w', 'inst_num', 'stepienie', 'narost', 'zatarcie', 'wykruszenie', 'stepienie_w_rzedach', 'wielkosc_stepienia']
 
 # Available broaches
 available_broach_indicators = BROACH_LIST
@@ -42,7 +42,7 @@ app = dash.Dash(__name__)
 app.layout = html.Div([
     # Title
     html.Div([
-        html.H1('Zużycie zębów przeciągacza'),
+        html.H1('Kontrola zużycia zębów przeciągacza'),
         ],style={'textAlign': 'center'}),
     # Scatter plot with slider
     html.Div([
@@ -86,10 +86,8 @@ app.layout = html.Div([
     html.Div([  
         html.Div([
             html.Div([
-                html.H1('Informacje'),
-                    'wysokość:\n'
-                    'szerokość:\n'
-                    'pole:\n' 
+                html.H1('Dodatkowe dane'),
+   
                 ],style={'width': '90%','height':'535px','float': 'left', 'display': 'inline-block','margin-left': '20px','margin-right': '20px'})
             ],style={'width': '90%','float': 'left', 'display': 'inline-block'})
             
@@ -166,6 +164,8 @@ def update_scatter(value,categoryPick,FOLDER_NAME):
     )
 def update_image(clickData,value,FOLDER_NAME,draw_pick):
 
+    df = pd.read_csv(BROACH_CSV + '\\' + FOLDER_NAME + '.csv')
+
     SUBFOLDER = SUBFOLDERS[ available_dropdown_indicators.index(value)]
     DATA_FOLDER_PATH =  BROACH_DIR + '\\' + FOLDER_NAME + '\\' + SUBFOLDER
     IMAGE_NAME = str(clickData['points'][0]['hovertext'])
@@ -217,21 +217,31 @@ def update_image(clickData,value,FOLDER_NAME,draw_pick):
      Input('draw','value')]
     )
 def update_image(clickData,value,FOLDER_NAME,draw_pick):
+    
+    df = pd.read_csv(BROACH_CSV + '\\' + FOLDER_NAME + '.csv')
+    
     SUBFOLDER = SUBFOLDERS[ available_dropdown_indicators.index(value)]
     DATA_FOLDER_PATH =  BROACH_DIR + '\\' + FOLDER_NAME + '\\' + SUBFOLDER
     IMAGE_NAME = str(clickData['points'][0]['hovertext'])
     FULL_PATH = DATA_FOLDER_PATH + '\\' + IMAGE_NAME 
     img = io.imread(FULL_PATH)
-
+    
+    print(df.loc[df['img_name']==IMAGE_NAME])
+    print(value)
     # Displaying failures categories
     if(value == 'Segmentacja'): 
         mask = output = np.zeros_like(img)
+        print('debug')
         inst_ids = str(df.loc[df['img_name']==IMAGE_NAME, 'inst_id'])
+        print('debug')
         inst_ids = inst_ids[inst_ids.rfind('[') + 1:]
         inst_ids = inst_ids[:inst_ids.rfind(']')]
         inst_ids = np.array(inst_ids.split(' '))
         inst_num = df.loc[df['img_name']==IMAGE_NAME, 'inst_num']
+        print('debug')
+        print(inst_num)
         for i in range(int(inst_num)):
+            print('debug')
             DATA_FOLDER_PATH =  BROACH_DIR + '\\' + FOLDER_NAME + '\segmentation'  
             BASE_NAME = IMAGE_NAME.split('.')[0]
             FULL_PATH = DATA_FOLDER_PATH + '\\' + BASE_NAME + '-' + str(i) + '.png'
