@@ -2,4 +2,8 @@
 *.xlsx
 *.pptx
 output/
+.coco_eval/
 coco_eval/
+coco_eval
+eval/
+.neptune/
