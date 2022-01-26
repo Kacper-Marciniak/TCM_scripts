@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 FILE = 'B_old.csv'
-value = 'wielkosc_stepienia'
+value = 'l'
 
 EXCEL = r'D:\Konrad\TCM_scan\excel'
 DASH = r'D:\Konrad\TCM_scan\dash'

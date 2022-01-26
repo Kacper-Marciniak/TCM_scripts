@@ -7,14 +7,15 @@ from matplotlib.image import imread
 import scipy.misc
 from PIL import Image, ImageOps 
 import prepare_models
-
-PATHES_LIST =  [
-                r'D:\Konrad\TCM_scan\dash_skany\C_short',
+# r'D:\Konrad\TCM_scan\dash_skany\C_short',
+PATHES_LIST =  [r'D:\Konrad\TCM_scan\dash_skany\pwr_c_niedokonczone',
+                 r'D:\Konrad\TCM_scan\dash_skany\brudny',
+                r'D:\Konrad\TCM_scan\dash_skany\C_old',
                 r'D:\Konrad\TCM_scan\dash_skany\A_old',
                 r'D:\Konrad\TCM_scan\dash_skany\A_new',
                 r'D:\Konrad\TCM_scan\dash_skany\B_old',
-                r'D:\Konrad\TCM_scan\dash_skany\C_old',
                 r'D:\Konrad\TCM_scan\dash_skany\D_new',
+                r'D:\Konrad\TCM_scan\dash_skany\schodek',
                 ] 
 
 DASH_PATH = r'D:\Konrad\TCM_scan\dash' # Path to the folder with .csv files
@@ -148,7 +149,7 @@ def normalize_in_x(img):
     return img
 def draw_plot(img,name):
 
-    # Find global bounding box containing all instances
+    # Find global bounding box containing all 'blunt' instances
     contours, hierarchy = cv.findContours(img,cv.RETR_LIST,cv.CHAIN_APPROX_SIMPLE)[-2:]
     idx = 0 
     height, width = img.shape
@@ -211,7 +212,7 @@ for data_path in PATHES_LIST:   # Iterate over folders
     print("Processing:",data_path)
     print("Number of images:", len(files))
 
-# Containers for stored values
+    # Containers for stored values
     l_id, w_id, img_name = [],[],[]
     min_x, min_y, max_x, max_y = [],[],[],[]
     l, w, c_l, c_w = [],[],[],[] 
@@ -223,8 +224,6 @@ for data_path in PATHES_LIST:   # Iterate over folders
         row = int(split_name[1])
         
         im = cv.imread(data_path + r'/images/' + image_name) # Read image
-        
-
         print(image_name) 
         img_name.append(str(image_name))
         l_id.append(int(split_name[0]))
@@ -249,32 +248,26 @@ for data_path in PATHES_LIST:   # Iterate over folders
                 inst_id.append(str(pred_class))
                 blunt_values.append(blunt_value)
             except:
-                inst_num.append(None)
-                scores.append(None)
-                inst_id.append(None)
-                blunt_values.append(None)
-
+                inst_num.append(0)
+                scores.append([0])
+                inst_id.append([])
+                blunt_values.append(-1)
         except:
             print("Extraction error in tooth:",image_name)   
-            min_x.append(None)
-            min_y.append(None)
-            max_x.append(None) 
-            max_y.append(None)              
-            l.append(None)
-            w.append(None)
-            c_l.append(None)
-            c_w.append(None)  
-            
-
-            
-            # Preparing data for dataframe
-
-
-         
-
-            
-            
-    
+            min_x.append(0)
+            min_y.append(0)
+            max_x.append(0) 
+            max_y.append(0)              
+            l.append(0)
+            w.append(0)
+            c_l.append(0)
+            c_w.append(0)  
+            inst_num.append(0)
+            scores.append([0])
+            inst_id.append([])
+            blunt_values.append(-1)
+                   
+            # Preparing data for dataframe    
     data = {'img_name':img_name, 'minx':min_x,        'maxx':max_x,    'miny':min_y ,
             'maxy':max_y,        'l_id':l_id,         'w_id':w_id,     'l':l, 
             'w':w,               'c_l':c_l,           'c_w':c_w,       'inst_num':inst_num,     

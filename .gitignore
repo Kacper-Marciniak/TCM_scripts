@@ -2,8 +2,9 @@
 *.xlsx
 *.pptx
 output/
-.coco_eval/
-coco_eval/
-coco_eval
+coco_eval/coco_instances_results.json
+coco_eval/instances_predictions.pth
+D:\Konrad\TCM_scripts\coco_eval\coco_instances_results.json
+D:\Konrad\TCM_scripts\coco_eval\instances_predictions.pth
 eval/
 .neptune/
