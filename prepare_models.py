@@ -28,8 +28,8 @@ class Models:
         return predictor
     def preapre_segmentation_model(self): 
         cfg = get_cfg()
-        cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-        cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
+        cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml"))
+        cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml")
         cfg.OUTPUT_DIR =  r"D:\Konrad\TCM_scan\traning_segmentation\output"
         cfg.MODEL.ROI_HEADS.NUM_CLASSES = 4
         os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)

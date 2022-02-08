@@ -8,12 +8,15 @@ import scipy.misc
 from PIL import Image, ImageOps 
 import prepare_models
 # r'D:\Konrad\TCM_scan\dash_skany\C_short',
-PATHES_LIST =  [r'D:\Konrad\TCM_scan\dash_skany\pwr_c_niedokonczone',
-                 r'D:\Konrad\TCM_scan\dash_skany\brudny',
+PATHES_LIST =  [
+                r'D:\Konrad\TCM_scan\dash_skany\alicone_A',
+                r'D:\Konrad\TCM_scan\dash_skany\alicone_B',
+                r'D:\Konrad\TCM_scan\dash_skany\B_old',  
+                r'D:\Konrad\TCM_scan\dash_skany\pwr_c_niedokonczone',
+                r'D:\Konrad\TCM_scan\dash_skany\brudny',
                 r'D:\Konrad\TCM_scan\dash_skany\C_old',
                 r'D:\Konrad\TCM_scan\dash_skany\A_old',
                 r'D:\Konrad\TCM_scan\dash_skany\A_new',
-                r'D:\Konrad\TCM_scan\dash_skany\B_old',
                 r'D:\Konrad\TCM_scan\dash_skany\D_new',
                 r'D:\Konrad\TCM_scan\dash_skany\schodek',
                 ] 
@@ -27,7 +30,7 @@ def create_missing_catalogs(DATA_FOLDER_PATH):
     if os.path.exists (DATA_FOLDER_PATH + r'\otsu_tooth') == False:     os.mkdir(DATA_FOLDER_PATH + r'\otsu_tooth')
     if os.path.exists (DATA_FOLDER_PATH + r'\segmentation') == False:       os.mkdir(DATA_FOLDER_PATH + r'\segmentation')
     if os.path.exists (DATA_FOLDER_PATH + r'\stepienie_analyze') == False:       os.mkdir(DATA_FOLDER_PATH + r'\stepienie_analyze')
-    if os.path.exists (DATA_FOLDER_PATH + r'\plots') == False:       os.mkdir(DATA_FOLDER_PATH + r'\plots')
+    if os.path.exists (DATA_FOLDER_PATH + r'\plots') == False:       os.mkdir(DATA_FOLDER_PATH + r'\plots')  
 def decode_segmentation(im, imageName):
   
     outputs = segmentation_predictor(im) # Inference 
@@ -246,7 +249,7 @@ for data_path in PATHES_LIST:   # Iterate over folders
                 inst_num.append(str(num_instances))
                 scores.append(str(score))
                 inst_id.append(str(pred_class))
-                blunt_values.append(blunt_value)
+                blunt_values.append(blunt_value/603)
             except:
                 inst_num.append(0)
                 scores.append([0])
@@ -275,7 +278,9 @@ for data_path in PATHES_LIST:   # Iterate over folders
     CSV_NAME = data_path.split('.')[0]
     CSV_NAME = CSV_NAME[CSV_NAME.rfind('\\') + 1:] + '.csv'
     df = pd.DataFrame(data, columns = ['img_name','minx','maxx','miny','maxy','l_id', 'w_id','l', 'w', 'c_l', 'c_w', 'inst_num','scores','inst_id','wielkosc_stepienia']) 
+    print(df[:3]) # Show few data in console
     df = add_instances_categories(df) 
+    print(df[:3]) # Show few data in console
     df.to_csv (DASH_PATH + '\\' + CSV_NAME, index = False, header=True)
 
     # Prepare containers for each row 

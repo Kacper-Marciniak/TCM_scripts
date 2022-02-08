@@ -20,10 +20,10 @@ print(df[:3]) # Show few data in console
 
 # Preparing values for axis markers of the main scatter
 available_x_indicators = df['w_id'].unique()
-displayed_x_indicators = available_x_indicators[0:len(available_x_indicators)] 
+displayed_x_indicators = available_x_indicators[0:len(available_x_indicators+20)] 
 available_y_indicators = df['l_id'].unique()
 available_y_indicators.sort()
-displayed_y_indicators = available_y_indicators[0:len(available_y_indicators)] 
+displayed_y_indicators = available_y_indicators[0:len(available_y_indicators+20)] 
 
 # Available preview modes
 available_dropdown_indicators = ['Orginalny', 'Wyodrebniony', 'Segmentacja']

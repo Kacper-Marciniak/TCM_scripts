@@ -15,14 +15,18 @@ w_elements[::-1].sort()
 
 tab = [[0 for col in range(w_max)] for row in range(l_max)]
 
+print(w_elements)
+print(l_elements)
+
+
 for img_name in df['img_name']:
     wielkosc_stepienia = pd.to_numeric(df.loc[df['img_name'] == img_name, value])
     l = pd.to_numeric(df.loc[df['img_name'] == img_name, 'l_id'])
     w = pd.to_numeric(df.loc[df['img_name'] == img_name, 'w_id'])
     l, w, wielkosc_stepienia = np.array(l)[0], np.array(w)[0], np.array(wielkosc_stepienia)[0]    
-    #print(l, w, wielkosc_stepienia)
     id_l = np.where(l_elements == l)[0][0]
     id_w = np.where(w_elements == w)[0][0]
+    print(l, w, id_l,id_w ,wielkosc_stepienia)
     tab[id_l][id_w] = int(wielkosc_stepienia)
 
 excel = pd.DataFrame(tab)
