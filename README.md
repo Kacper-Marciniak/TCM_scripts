@@ -31,6 +31,7 @@
 
 ## Features
 **Dash application used for output visualization.**
+
 https://user-images.githubusercontent.com/62110076/153577769-51b06553-928e-471d-a0c0-fc5e0056007a.mp4
 
 **MLOPs platform - Neptune AI for experiments tracking pourposes.**
