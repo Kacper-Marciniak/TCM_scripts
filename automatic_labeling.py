@@ -19,7 +19,7 @@ import glob
 from matplotlib.image import imread
 
 # Path to the folder with extracted teeth images utilized for automatic annotations
-pth = r'D:\Konrad\TCM_scan\traning_segmentation\test2\\'
+pth = r'D:\Konrad\TCM_scan\traning_segmentation\test3_alicona\\'
 
 models = prepare_models.Models()
 segmentation_predictor = models.preapre_segmentation_model()
@@ -77,13 +77,11 @@ for imageName in glob.glob(pth + '*png'): # Iterate over all images in folder
     pred_classes = outputs["instances"].to("cpu").pred_classes.numpy()
     num_instances = pred_masks.shape[0] 
     pred_masks = np.moveaxis(pred_masks, 0, -1)
-    pred_masks_instance = []
     output = np.zeros_like(im)
     labelme_json = labelme_start # Create begening of the labelme json file
     
     # Contains merged bitmaps for particular failures classes
     outputs = {
-        
         "wykruszenie": np.zeros_like(im),
         "narost": np.zeros_like(im),
         "stepienie": np.zeros_like(im),
@@ -91,8 +89,7 @@ for imageName in glob.glob(pth + '*png'): # Iterate over all images in folder
     }
 
     # Contains temporary data used during merging
-    pred_masks_instance = {
-        
+    pred_masks_instance = {   
         "wykruszenie": [],
         "narost": [],
         "stepienie": [],
