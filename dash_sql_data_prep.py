@@ -7,17 +7,18 @@ import scipy.misc
 from PIL import Image, ImageOps 
 import prepare_models
 import sql_connection
+import shutil
 
 # User define variables
-SCAN_NAME = '22-03-08-14-40'
+SCAN_NAME = '22-03-23-13-12'
 
 # Program variables
-INPUT_PATH = r'D:\Konrad\TCM_scan\sql_input'    # Path to the folder with the images directly from scaner
+INPUT_PATH = r'D:\Konrad\TCM_scan\dash_skany\A_new\images'    # Path to the folder with the images directly from scaner
 OUTPUT_IMG_PATH  = r'D:\Konrad\TCM_scan\dash_sql/'   # Path to the folder with processed images_F
 OUTPUT_IMG_PATH = OUTPUT_IMG_PATH + SCAN_NAME
 
 models = prepare_models.Models()
-sql = sql_connection.SQLConnection()
+sql = sql_connection.SQLConnection(debug=False)
 sql.create_scan(SCAN_NAME,OUTPUT_IMG_PATH)
 extraction_predictor = models.preapre_extraction_model()
 segmentation_predictor = models.preapre_segmentation_model()
@@ -98,36 +99,58 @@ def add_binary_categories(inst_ids):
 
     return narost, zatarcie, wykruszenie
 def tooth_inference(image_name):
-    im = cv.imread(INPUT_PATH + '//' + image_name) # Read image
-    cv.imwrite(OUTPUT_IMG_PATH + '/images/' + image_name, im)
-    outputs = extraction_predictor(im)
-    minx, miny, maxx, maxy = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy())
-    roi = im.copy()[int(miny)-50:int(maxy)+50, int(minx)-100:int(maxx)+100] 
-    cv.imwrite(OUTPUT_IMG_PATH + '/otsu_tooth/' + image_name , roi) 
+    try:
+        im = cv.imread(INPUT_PATH + '//' + image_name) # Read image
+        cv.imwrite(OUTPUT_IMG_PATH + '/images/' + image_name, im)
+        outputs = extraction_predictor(im)
+        minx, miny, maxx, maxy = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy())
+    except:
+        print("There is problem with image:",INPUT_PATH + '//' + image_name)
+        try:
+            source = INPUT_PATH + '//' + image_name
+            destination = OUTPUT_IMG_PATH + '/images/' + image_name 
+            shutil.copyfile(source, destination)
+        except:
+            print("Can't copy corrupted file")
+
 
     try: # Extraction
+        roi = im.copy()[int(miny)-50:int(maxy)+50, int(minx)-100:int(maxx)+100] 
+        cv.imwrite(OUTPUT_IMG_PATH + '/otsu_tooth/' + image_name , roi) 
+
         length = (maxy - miny)/603
         width = (maxx - minx)/603
         centre_lenght = ((maxy + miny)/2)/603
-        centre_width = ((maxx + minx)/2)/603  
+        centre_width = ((maxx + minx)/2)/603 
+
+        length, width, centre_lenght, centre_width = round(length,5), round(width,5), round(centre_lenght,5), round(centre_width,5) 
         try: # Segmentation
             num_instances, pred_class, score, stepienie = decode_segmentation(roi, image_name)
             num_instances = str(num_instances)
+            score = [ round(elem, 4) for elem in score ]
             score = str(score)
             pred_class = str(pred_class)
             stepienie = stepienie/603
+            stepienie = round(stepienie,5)
             narost, zatarcie, wykruszenie = add_binary_categories(pred_class)
         except:
+            print("Segmentation error in tooth:", image_name)  
             num_instances = None
             score = None
             pred_class = None
             stepienie = None
+            narost, zatarcie, wykruszenie = None,None,None
     except:
-        print("Extraction error in tooth:",image_name)  
+        print("Extraction error in tooth:", image_name)  
         length = None
         width = None
         centre_lenght = None
         centre_width = None 
+        num_instances = None
+        score = None
+        pred_class = None
+        stepienie = None
+        narost, zatarcie, wykruszenie = None,None,None
 
     dict = {'length':length, 'width':width, 'centre_lenght':centre_lenght, 'centre_width':centre_width, 
             'num_instances':num_instances, 'score':score, 'pred_class':pred_class, 'stepienie': stepienie, 
@@ -205,8 +228,9 @@ def draw_plot(img,name):
     plt.axhline(y=int(max_v*0.1), color='r', linestyle='-') # 10% line
     plt.axvline(x=start, color='r', linestyle='--') # 10% line
     plt.axvline(x=stop, color='r', linestyle='--') # 10% line
-    plt.title("{:0.3f}mm".format((stop-start)/603))
-    plt.savefig(plot_name)
+    plt.title("Row stępienie = {:0.3f}mm".format((stop-start)/603))
+    plt.axis("off")
+    plt.savefig(plot_name,dpi=300)
     plt.clf()
     
     '''
@@ -231,7 +255,6 @@ def draw_plot(img,name):
     print(' ')
     print(sql.get_tooth_param(SCAN_NAME,'tooth_number','1'))
     '''
-
 
 
 files = list(os.listdir(INPUT_PATH))

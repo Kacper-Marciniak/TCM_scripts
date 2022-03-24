@@ -11,12 +11,11 @@ import prepare_models
 PATHES_LIST =  [
                 r'D:\Konrad\TCM_scan\dash_skany\alicone_A',
                 r'D:\Konrad\TCM_scan\dash_skany\alicone_B',
+                r'D:\Konrad\TCM_scan\dash_skany\A_new',
+                r'D:\Konrad\TCM_scan\dash_skany\A_old',
                 r'D:\Konrad\TCM_scan\dash_skany\B_old',  
-                r'D:\Konrad\TCM_scan\dash_skany\pwr_c_niedokonczone',
                 r'D:\Konrad\TCM_scan\dash_skany\brudny',
                 r'D:\Konrad\TCM_scan\dash_skany\C_old',
-                r'D:\Konrad\TCM_scan\dash_skany\A_old',
-                r'D:\Konrad\TCM_scan\dash_skany\A_new',
                 r'D:\Konrad\TCM_scan\dash_skany\D_new',
                 r'D:\Konrad\TCM_scan\dash_skany\schodek',
                 ] 
@@ -54,12 +53,11 @@ def decode_segmentation(im, imageName):
         out_png_name = data_path + r'\segmentation' + '\\' + base_name + '-' + str(i) + '.png'
         im.save(out_png_name)
 
-
     # Combine instances 'stępienie' and save it for the further rows analyzys in 'stepienie_analyze' directory
     pred_masks_instance_stepienie = []
     output_stepienie = np.zeros_like(im)
     j = 0
-    for i in range(num_instances):# Combine each 'stepienie' binary mask
+    for i in range(num_instances): # Combine each 'stepienie' binary mask
         if(pred_classes[i] == 2):
             pred_masks_instance_stepienie.append(pred_masks[:, :, i:(i+1)])
             output_stepienie = np.where(pred_masks_instance_stepienie[j] == True, 255, output_stepienie)
