@@ -1,5 +1,6 @@
 from numpy import empty
 import pymssql 
+import numpy as np
 
 class SQLConnection:
     def __init__(self,debug=False):
@@ -8,7 +9,6 @@ class SQLConnection:
         self.debug = debug
         self.conn = pymssql.connect(server = 'DESKTOP-JH390UV\SQLEXPRESS', database='TCM_test') 
         self.cursor = self.conn.cursor()
-        print("Created SQL connection.")
 
     def create_scan(self,scan_name,path):
         '''
@@ -77,7 +77,6 @@ class SQLConnection:
 
             return 0
 
-    
     def get_scan_param(self, param_name, scan_name = ''):
         if(scan_name):
             insertStatement = 'SELECT {} FROM SKAN WHERE nazwa=\'{}\';'.format(param_name, scan_name)
@@ -168,7 +167,6 @@ class SQLConnection:
         except:
             print('Can not upload declared row')
 
-    
     def ovverride_row_stepienie(self, scan_name, stepienie, row_number):
         '''
         Update ROW table by adding custom 'stepienie' value for whole row
@@ -195,8 +193,6 @@ class SQLConnection:
             print('Can not upload declared row')
             return -1
 
-
-
     def select_from_view(self, scan_name, param_name, conditions=''):
         if len(conditions)>0: conditions = "and " + conditions 
         insertStatement = "SELECT tooth_number, row_number, {}, image_name FROM [View_1] WHERE nazwa=\'{}\' {};".format(param_name, scan_name, conditions)
@@ -205,6 +201,95 @@ class SQLConnection:
         data = self.cursor.fetchall()
         return data
     
+    def get_broach_params_names(self):
+        insertStatement = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = \'TypeOfBroach\''
+        self.cursor.execute(insertStatement)
+        data = self.cursor.fetchall()
+        return data
+    
+    def get_broach_params_values(self):
+        insertStatement = 'SELECT * FROM TypeOfBroach'
+        self.cursor.execute(insertStatement)
+        data = self.cursor.fetchall()
+        return data
+
+    def update_broach_params(self,data):
+        ids = [] # All ids from table
+        for row in data:
+            id = row['ID']
+            ids.append(id)
+            # Check if id is valid, if return error
+            if(not id): 
+                print('No ID in row')
+                return -1
+            # Find all columns names
+            keys = []
+            for key in row:
+                if(key!='ID'):keys.append(key)
+            # Fill columns with data
+            params_u, params_c1, params_c2 = '','',''
+            for i,key in enumerate(keys):
+                v = str(row[key])
+                # Formatting issues
+                if v == 'True': v='1'
+                if v == 'False': v='0'
+                if v == 'None': v='none'
+                if key == 'Project' or key == 'Verbao_id':
+                    v = " \'{}\' ".format(v)
+                # Creating insert Statement parameters
+                if(i+1==len(keys)): 
+                    params_u += str(key) + '=' + v
+                    params_c1 += str(key)
+                    params_c2 += v
+                else: 
+                    params_u += str(key) + '=' + v + ', '
+                    params_c1 += str(key) + ', '
+                    params_c2 += v + ', '
+            
+            # Check if id from table exist in database
+            self.cursor.execute('SELECT ID FROM TypeOfBroach WHERE ID={}'.format(id))
+            data = self.cursor.fetchall()
+            data = np.array(data)
+            data = np.reshape(data,(-1))
+            if(data): base = 1 
+            else: base = 0
+
+            # Create record
+            if(base == 0):
+                # insertStatement = "UPDATE TypeOfBroach SET {} WHERE ID={}".format(params, id)
+                insertStatement = "INSERT INTO TypeOfBroach (ID, {}) VALUES ({},{})".format(params_c1, id, params_c2) 
+                if(self.debug): print(insertStatement)
+                print('Create')
+
+            # Update record
+            if(base == 1):
+                insertStatement = "UPDATE TypeOfBroach SET {} WHERE ID={}".format(params_u, id)
+                if(self.debug): print(insertStatement)
+                print('Update')
+
+            # Execute insert statement
+            try:
+                self.cursor.execute(insertStatement)
+                self.conn.commit()
+                print("Executed succesfuly")
+            except:
+                print('Can not upload declared row')
+                return -1
+        
+        
+        print(np.array(ids))
+        # Get all ids from the database
+        self.cursor.execute('SELECT ID FROM TypeOfBroach')
+        data = self.cursor.fetchall()
+        data = np.array(data)
+        data = np.reshape(data,(-1))
+        print(np.array(data))
+
+        return 1
+
+
+
+
 
 '''
 delete_list = [
@@ -222,9 +307,11 @@ delete_list = [
 
 sql = SQLConnection(debug=False)
 
+
 for nazwa in delete_list:
     insertStatement = 'DELETE FROM SKAN WHERE nazwa=\'{}\''.format(nazwa)
     print(insertStatement)
     sql.cursor.execute(insertStatement)
     sql.conn.commit()
 '''
+

@@ -2,7 +2,7 @@ import glob, os
 from random import random
 from shutil import copyfile
 
-DATA_PATH = r'D:/Konrad/TCM_scan/traning_segmentation/data'
+DATA_PATH = r'D:\Konrad\TCM_scan\traning_segmentation\data'
 
 val_precentage = 0.15 #15% 
 test_precentage = 0.3 #15% (15-30)
@@ -48,5 +48,7 @@ def merge_data():
         os.remove(DATA_PATH + r'/train'+ '/'+ file)
         
 
+
 merge_data()
 split_data()
+print("Finished")

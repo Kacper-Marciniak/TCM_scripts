@@ -1,22 +1,19 @@
 import os
 from shutil import copyfile
 
-destination = r'D:\Konrad\TCM_scan\traning_segmentation\data\train'
+destination = r'D:\Konrad\TCM_scan\training_extraction\data\anot'
 PATHES_LIST =  [
-                r'D:\Konrad\TCM_scan\dash_skany\C_old',
-                r'D:\Konrad\TCM_scan\dash_skany\D_new',
-         
-                ] # Foldery do analizy, wpisz ile chesz - zrobi wszystkie jeden po drugim
+                r'D:\Konrad\TCM_scan\training_extraction\data\temp',] # Foldery do analizy, wpisz ile chesz - zrobi wszystkie jeden po drugim
 
 
 for path_from in PATHES_LIST:
     
-    files = os.listdir(path_from + r'/otsu_tooth')
+    files = os.listdir(path_from)
 
     for f in files:
         folder = path_from[path_from.rfind('\\')+1:]
         
-        src = path_from  + r'/otsu_tooth/' + str(f)
+        src = path_from  +'\\'+ str(f)
         dst = destination +'\\' + str(folder) +'_'+ str(f)
         print(src,'---------->',dst)
         copyfile(src,dst)

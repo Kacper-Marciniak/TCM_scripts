@@ -10,10 +10,10 @@ import sql_connection
 import shutil
 
 # User define variables
-SCAN_NAME = '22-03-23-13-12'
+SCAN_NAME = '22-05-11-11-52'    # Current date as scan name (can be replaced with automatic generator)
 
 # Program variables
-INPUT_PATH = r'D:\Konrad\TCM_scan\dash_skany\A_new\images'    # Path to the folder with the images directly from scaner
+INPUT_PATH = r'I:\for_ml_19_07\images'    # Path to the folder with the images directly from scaner
 OUTPUT_IMG_PATH  = r'D:\Konrad\TCM_scan\dash_sql/'   # Path to the folder with processed images_F
 OUTPUT_IMG_PATH = OUTPUT_IMG_PATH + SCAN_NAME
 

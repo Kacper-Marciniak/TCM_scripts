@@ -2,17 +2,20 @@
 # import functions
 from labelme2coco import get_coco_from_labelme_folder, save_json
 
+base_folder = r"D:\Konrad\TCM_scan\traning_segmentation/"
+
+
 # set labelme training data directory
-labelme_train_folder = r"D:\Konrad\TCM_scan\traning_segmentation\data\train"
+labelme_train_folder = base_folder + "data/train"
 
 # set labelme validation data directory
-labelme_val_folder = r"D:\Konrad\TCM_scan\traning_segmentation\data\val"
+labelme_val_folder = base_folder + "data/val"
 
 # set labelme validation data directory
-labelme_test_folder = r"D:\Konrad\TCM_scan\traning_segmentation\data\test"
+labelme_test_folder = base_folder + "data/test"
 
 # set path for coco json to be saved
-export_dir = r"D:\Konrad\TCM_scan\traning_segmentation\data\\annotations\data_"
+export_dir = base_folder + "data/annotations/data_"
 
 # create train coco object
 train_coco = get_coco_from_labelme_folder(labelme_train_folder)

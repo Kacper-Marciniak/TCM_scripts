@@ -37,7 +37,6 @@ COLORS = ['l', 'w','c_l', 'c_w', 'inst_num', 'stepienie', 'narost', 'zatarcie', 
 available_broach_indicators = BROACH_LIST
 
 app = dash.Dash(__name__)
-
 # Layout structure
 app.layout = html.Div([
     # Title
@@ -108,7 +107,6 @@ app.layout = html.Div([
         ],style={'width': '32%', 'display': 'inline-block'}),  
     #Image 2
     html.Div([
-
         html.Div([
             dcc.Dropdown(
                 id='image2d',
@@ -271,6 +269,5 @@ def update_image(clickData,value,FOLDER_NAME,draw_pick):
     return fig, IMAGE_NAME
 
     
-
 if __name__ == '__main__':
     app.run_server(debug=False)

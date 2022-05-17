@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 FILE = 'B_old.csv'
-value = 'l'
+value = 'wielkosc_stepienia'
 
 EXCEL = r'D:\Konrad\TCM_scan\excel'
 DASH = r'D:\Konrad\TCM_scan\dash'
@@ -15,8 +15,8 @@ w_elements[::-1].sort()
 
 tab = [[0 for col in range(w_max)] for row in range(l_max)]
 
-print(w_elements)
-print(l_elements)
+print(l_max,w_max)
+
 
 
 for img_name in df['img_name']:
@@ -26,8 +26,7 @@ for img_name in df['img_name']:
     l, w, wielkosc_stepienia = np.array(l)[0], np.array(w)[0], np.array(wielkosc_stepienia)[0]    
     id_l = np.where(l_elements == l)[0][0]
     id_w = np.where(w_elements == w)[0][0]
-    print(l, w, id_l,id_w ,wielkosc_stepienia)
-    tab[id_l][id_w] = int(wielkosc_stepienia)
+    tab[l_max-l][w-1] = int(wielkosc_stepienia)
 
 excel = pd.DataFrame(tab)
 excel.to_csv (EXCEL +'//'+ FILE.split('.')[0] + '_' + value + '.csv', index = False, header = False)
