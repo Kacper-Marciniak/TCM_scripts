@@ -15,6 +15,7 @@ from skimage import io
 import math
 import cv2 as cv
 import sql_connection
+import optimization_module
 import statistics
 from dash import Dash, dash_table
 from collections import OrderedDict
@@ -24,8 +25,8 @@ from os.path import exists
 from PIL import Image, ImageFile
 from dash.exceptions import PreventUpdate
 import statistics
+import datetime
 ImageFile.LOAD_TRUNCATED_IMAGES = True # Enable corrupted images loading
-
 
 
 def convert_sql_output(sql_data):
@@ -134,6 +135,7 @@ def update_image(clickData,value,FOLDER_NAME,draw_pick):
 
 # Establish SQL connection 
 sql = sql_connection.SQLConnection(debug=False)
+optimize = optimization_module.Optimization()
 
 # Find newest scan and display it as default
 BROACH_LIST = convert_sql_output( sql.get_scan_param('nazwa'))
@@ -144,11 +146,16 @@ displayed_x_indicators = convert_sql_output(sql.get_row_param(default_broach,'ro
 displayed_y_indicators = find_broach_width(default_broach,displayed_x_indicators)
 
 # Params table values
-table_columns_names = convert_sql_output(sql.get_broach_params_names())
-params_df = pd.DataFrame(sql.get_broach_params_values())
+table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
+params_df = pd.DataFrame(sql.get_table_values('TypeOfBroach'))
 params_df.columns = table_columns_names
 params_data = params_df.to_dict('records')
 
+# Broach (options) table values
+broach_columns_names = convert_sql_output(sql.get_table_names('Broach'))
+broach_df = pd.DataFrame(sql.get_table_values('Broach'))
+broach_df.columns = broach_columns_names
+broach_data = broach_df.to_dict('records')
 
 # Terminate sql connection 
 sql = None
@@ -184,10 +191,12 @@ available_template_indicators = ['Example Type 1', 'Example Type 2', 'Example Ty
 
 # Layout global styling parameters
 cards_st ={"height": 660,"font-family": "Arial"}
+cards_st_options ={"height": 480,"font-family": "Arial"}
 font_st = {'font-size':'20px','height':'35px',"font-family": "Arial"}
 
 # Utilized graphics
 PLOTLY_LOGO = "http://www.mvlab.pl/images/logo.png"
+TCM_LOGO = "https://www.tcm-international.com/fileadmin/user_upload/TCM-Logo-klein.JPG"
 polish = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Flag_of_Poland_%28normative%29.svg/640px-Flag_of_Poland_%28normative%29.svg.png"
 english = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Flag_of_Great_Britain_%281707%E2%80%931800%29.svg/800px-Flag_of_Great_Britain_%281707%E2%80%931800%29.svg.png?20220223062637"
 german = "https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/Flag_of_Germany.svg/255px-Flag_of_Germany.svg.png"
@@ -195,18 +204,24 @@ german = "https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/Flag_of_Germany.s
 # Bootstrap style
 app = dash.Dash(__name__,external_stylesheets =[dbc.themes.LITERA],suppress_callback_exceptions=True)
 
-
-
 def serve_layout():
     return html.Div([dcc.Location(id='url', refresh=True), html.Div(id='page-content')])
-
 app.layout = serve_layout
 
+# Uniform navbar for each page
 def generate_navbar(active_page = 0):
     pages = [False,False,False,False]
     pages[active_page]=True
     navbar = dbc.Card([
         dbc.Row([
+            # TCM logo
+            dbc.Col([
+                html.Div([
+                    html.Img(src=TCM_LOGO, height="70px")
+                ],style={"vertical-align": "middle"}) 
+            ],
+            style={"vertical-align": "middle", "margin-left":"30px",},
+            width=1),
             # MV Lab logo
             dbc.Col([
                 html.Div([
@@ -220,7 +235,7 @@ def generate_navbar(active_page = 0):
                 html.H2(["BROACH CONTROL APP"],style={"color":"#597cc7","margin-top":"10px","margin-bottom":"10px",}), 
             ],
             style={"text-color":"#597cc7",'display': 'left',"margin-left":"55px","margin-right":"0px"},
-            width=5),
+            width=4),
             # Pages
             dbc.Col([
                 dbc.Breadcrumb(
@@ -238,29 +253,41 @@ def generate_navbar(active_page = 0):
             dbc.Col([
                 html.Div([
                     html.Img(src=polish, height="20px")
-                ],style={"align": "right"}),
+                ],style={"align": "right","margin-left":"105px"}),
                 html.Div([
                     html.Img(src=english, height="20px")
-                ],style={"vertical-align": "right"}),
+                ],style={"vertical-align": "right","margin-left":"105px"}),
             ],
             style={"vertical-align": "right", "margin-left":"85px","margin-top":"5px","margin-bottom":"5px","padding":"0px"},
             width=1),
         ])
     ])
     return navbar
+
+# Creating tables (optimization)
 def generate_type_dropdown():
     sql = sql_connection.SQLConnection(debug=False) 
-    data = pd.DataFrame(sql.get_broach_params_values())
-    table_columns_names = convert_sql_output(sql.get_broach_params_names())
+    data = pd.DataFrame(sql.get_table_values('TypeOfBroach'))
+    table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
     sql = None
     data.columns = table_columns_names
     
     return list(data["Project"])
+def generate_broach_table():
+    sql = sql_connection.SQLConnection(debug=False) 
+    data = pd.DataFrame(sql.get_table_values('Broach'))
+    table_columns_names = convert_sql_output(sql.get_table_names('Broach'))
+    sql = None
+    data.columns = table_columns_names
+    
+    return list(data["Project"])
+
+# Used to proccess data recieved from sql to display it in datatable
 def show_selected_params(project, return_type):
     # 1- return values 0- return columns names
     sql = sql_connection.SQLConnection(debug=False) 
-    data = pd.DataFrame(sql.get_broach_params_values())
-    table_columns_names = convert_sql_output(sql.get_broach_params_names())
+    data = pd.DataFrame(sql.get_table_values('TypeOfBroach'))
+    table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
     sql = None
     data.columns = table_columns_names
     data = data[["Project","AngleOfAttack","AngleOfClerance","AngleOfBack","NominalTootHeight"]]
@@ -269,10 +296,9 @@ def show_selected_params(project, return_type):
         return data.to_dict('records')
     else:
         return list(data.columns)
-
 def show_selected_broach_params(scan_name, return_type):
     # 1 - return values 0 - return columns names
-    sql = sql_connection.SQLConnection(debug=True)
+    sql = sql_connection.SQLConnection(debug=False)
     y = convert_sql_output(sql.get_row_param(scan_name,'stepienie_row_value'))
     x = convert_sql_output(sql.get_row_param(scan_name,'row_number'))
     y_correction = convert_sql_output(sql.get_row_param(scan_name,'stepienie_correction'))
@@ -291,7 +317,38 @@ def show_selected_broach_params(scan_name, return_type):
         return data.to_dict('records')
     else:
         return list(data.columns)
-        
+
+# Used to generate dropdowns in "Add broach" table (options)        
+def display_current_broach_types():
+    sql = sql_connection.SQLConnection(debug=False) 
+    data = pd.DataFrame(sql.get_table_values('TypeOfBroach'))
+    table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
+    sql = None
+    data.columns = table_columns_names
+    data = data[["Project"]]
+    return list(data['Project'])
+def update_types_dropdown():
+    
+    current_date = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    dropdown={
+        'BroachTypeID': {
+            'options': [
+                {'label': i, 'value': i}
+                for i in display_current_broach_types()
+                ]
+        },
+        'DateOfEntry': {
+            'options': [
+                {'label': current_date, 'value': current_date}
+                ]
+        },
+        'ScrappingDate': {
+            'options': [
+                {'label': current_date, 'value': current_date}
+                ]
+        },
+    }
+    return dropdown
 
 # Layout structures
 scanning = html.Div([
@@ -557,15 +614,48 @@ optimazation = html.Div([
                 ]),
                 width=6,
             ),
-            # Visualizastion
+            # Possible regenerations
             dbc.Col(
                 html.Div([
                     dbc.Card([
                         dbc.CardHeader(
-                            html.H2('Visualization'),
+                            html.H2('Regeneration possibilities'),
                         ),
                         dbc.CardBody([
-
+                            html.H3('Regeneracja I:'),
+                            dash_table.DataTable(
+                                id='regeneration_I',
+                                data = None,
+                                columns = [{'id': c, 'name': c} for c in ['Ilość przejść','Czas [min]','Koszt [zł]','Powierzchnia natarcia [um]']],
+                                page_size = 1,
+                                style_cell = {'font-size':'20px',"font-family": "Arial",'minWidth': '180px'},
+                                style_header = {'textAlign': 'center', 'fontWeight': 'bold', 'margin':'10px','font-size':'20px',"font-family": "Arial", 'height': '50px'},
+                                style_table = {'overflowX': 'auto','minWidth': '100%'},  
+                            ),
+                            html.Br(), 
+                            html.H3('Regeneracja "z góry":'),
+                            dash_table.DataTable(
+                                id='regeneration_z_gory',
+                                data = None,
+                                columns = [{'id': c, 'name': c} for c in ['Ilość przejść','Czas [min]','Koszt [zł]','Powierzchnia przyłożenia [um]']],
+                                page_size = 1,
+                                style_cell = {'font-size':'20px',"font-family": "Arial",'minWidth': '180px'},
+                                style_header = {'textAlign': 'center', 'fontWeight': 'bold', 'margin':'10px','font-size':'20px',"font-family": "Arial", 'height': '50px'},
+                                style_table = {'overflowX': 'auto','minWidth': '100%'},
+                            ), 
+                            html.Br(),
+                            html.H3('Regeneracja II:'),
+                            dash_table.DataTable(
+                                id='regeneration_II',
+                                data = None,
+                                columns = [{'id': c, 'name': c} for c in ['Ilość przejść przyłożenia','Ilość przejść natarcia','Czas [min]','Koszt [zł]','Pow. natarcia [um]','Pow. przyłożenia [um]']],
+                                page_size = 5,
+                                style_cell = {'font-size':'20px',"font-family": "Arial",'minWidth': '180px'},
+                                style_header = {'textAlign': 'center', 'fontWeight': 'bold', 'margin':'10px','font-size':'20px',"font-family": "Arial", 'height': '50px'},
+                                style_table = {'overflowX': 'auto','minWidth': '100%'},
+                            ),
+                               
+                          
                         ]),
                     ],style = cards_st),
 
@@ -587,7 +677,7 @@ options = html.Div([
     html.Br(),
     dbc.Card([
         dbc.Row([
-           # Template table
+           # Available broach templates
             dbc.Col(
                 html.Div([
                     dbc.Card([
@@ -595,11 +685,12 @@ options = html.Div([
                             html.H2('Available broach templates'),
                         ),
                         dbc.CardBody([
+                            # Add broach template 
                             dash_table.DataTable(
                                 id='params-datatable',
                                 data = params_data,
                                 columns = [{'id': c, 'name': c} for c in table_columns_names],
-                                page_size = 10,
+                                page_size = 6,
                                 style_cell = {'font-size':'20px',"font-family": "Arial",'minWidth': '180px'},
                                 style_header = {'textAlign': 'center', 'fontWeight': 'bold', 'margin':'10px','font-size':'20px',"font-family": "Arial", 
                                             'height': '50px'},
@@ -613,7 +704,7 @@ options = html.Div([
                             dbc.Row([
                                 dbc.Col(
                                     html.Div([
-                                        dbc.Button('Add new broach', id='editing-rows-button', color="secondary" ,n_clicks=0, style={'font-size': '20px'}), 
+                                        dbc.Button('Add new type', id='editing-rows-button', color="secondary" ,n_clicks=0, style={'font-size': '20px'}), 
                                     ]),
                                     width=11
                                 ),                                  
@@ -625,17 +716,68 @@ options = html.Div([
                                 )                                
                             ]),
                         ]),
-                    ],style = cards_st),
-                # Info message
-                dbc.Alert(
+                    ],style = cards_st_options),
+                    # Info message
+                    dbc.Alert(
                         "Input all template parameters and press submit to save record in the database",
                         color="info",
                         id = 'info-alert',
                         className="d-flex align-items-center",
                     ),                    
                 ]),
-                width=12,
+                width=12,    
             ), 
+            html.Br(), 
+           # Existing broaches
+            dbc.Col(
+                html.Div([
+                    dbc.Card([
+                        dbc.CardHeader(
+                            html.H2('Existing broaches'),
+                        ),
+                        dbc.CardBody([
+                            # Add broach 
+                            dash_table.DataTable(
+                                id='broach-datatable',
+                                data = broach_data,
+                                columns = [{'id': c, 'name': c,'presentation': 'dropdown'} for c in broach_columns_names],
+                                page_size = 6,
+                                style_cell = {'font-size':'20px',"font-family": "Arial",'minWidth': '180px','maxWidth': '220px'},
+                                style_header = {'textAlign': 'center', 'fontWeight': 'bold', 'margin':'10px','font-size':'20px',"font-family": "Arial", 'height': '50px'},
+                                editable = True,
+                                row_deletable = True,
+                                css=[{"selector": ".Select-menu-outer", "rule": "display: block !important"}], # Needed to fix displaying dropdown in table
+                                dropdown = update_types_dropdown()
+                            ),
+                            html.Div(id='broach-datatable-container'),
+                            html.Br(),         
+                            # Buttons
+                            dbc.Row([
+                                dbc.Col(
+                                    html.Div([
+                                        dbc.Button('Add new broach', id='editing-broach-button', color="secondary" ,n_clicks=0, style={'font-size': '20px'}), 
+                                    ]),
+                                    width=11
+                                ),                                  
+                                dbc.Col(
+                                    html.Div([
+                                        dbc.Button('Submit', id='submit-broach-button', color="secondary" ,n_clicks=0, style={'font-size': '20px'}), 
+                                    ]),
+                                    width=1
+                                )                                
+                            ]),
+                        ]),
+                    ],style = cards_st_options),  
+                    # Info message 2
+                    dbc.Alert(
+                        "Input new broach and press submit to save record in the database",
+                        color="info",
+                        id = 'info-alert2',
+                        className="d-flex align-items-center",
+                    ),                
+                ]),
+                width=12,    
+            ),             
         ]), 
         html.Br(), 
         dbc.CardFooter()  
@@ -680,16 +822,70 @@ def get_params(default_broach):
 
 # Broach type select
 @app.callback(
-    Output('params-simple-datatable', 'data'),
+    Output('type-simple-datatable', 'data'),
     Input('type-select', 'value'),
 )
 def get_params(default_broach):
     return show_selected_params(default_broach,1)
 
+# Regeneration I
+@app.callback(
+    Output('regeneration_I', 'data'),
+    [Input('scan-simple-datatable', 'data'),
+     Input('params-simple-datatable', 'data')]
+)
+def create_output(scan_data,type_data):
+    stepienie = scan_data[0]['Max blunt value [mm]']
+    dlugosc = scan_data[0]['Tooth lenght [mm]']
+    czas, koszt, ilosc_przejsc = optimize.regeneration_I_calculate_outputs(stepienie)
+    print(czas,koszt)
+    data = {'Ilość przejść':[ilosc_przejsc], 'Czas [min]':[round(czas,0)], 'Koszt [zł]':[round(koszt,2)], 'Powierzchnia natarcia [um]':[stepienie*1000]}
+    data = pd.DataFrame(data,columns=['Ilość przejść','Czas [min]','Koszt [zł]','Powierzchnia natarcia [um]'])
+    print(data.to_dict('records'))
+    return data.to_dict('records')
+
+# Regeneration "z góry"
+@app.callback(
+    Output('regeneration_z_gory', 'data'),
+    [Input('scan-simple-datatable', 'data'),
+     Input('params-simple-datatable', 'data')]
+)
+def create_output(scan_data,type_data):
+    stepienie = scan_data[0]['Max blunt value [mm]']
+    dlugosc = scan_data[0]['Tooth lenght [mm]']
+    czas, koszt, ilosc_przejsc, stepienie = optimize.regeneration_z_gory_calculate_outputs(stepienie)
+    print(czas,koszt)
+    data = {'Ilość przejść':[ilosc_przejsc], 'Czas [min]':[round(czas,0)], 'Koszt [zł]':[round(koszt,2)], 'Powierzchnia przyłożenia [um]':[stepienie*1000]}
+    data = pd.DataFrame(data,columns=['Ilość przejść','Czas [min]','Koszt [zł]','Powierzchnia przyłożenia [um]'])
+    print(data.to_dict('records'))
+    return data.to_dict('records')
+
+# Regeneration II
+@app.callback(
+    Output('regeneration_II', 'data'),
+    [Input('scan-simple-datatable', 'data'),
+     Input('params-simple-datatable', 'data')]
+)
+def create_output(scan_data,type_data):
+    stepienie = scan_data[0]['Max blunt value [mm]']
+    dlugosc = scan_data[0]['Tooth lenght [mm]']
+    r = optimize.regeneration_II_calculate_outputs(stepienie)
+    # czas_calkowity, koszt, ilosc_przejsc_natarcia, stepienie_natarcia,  ilosc_przejsc_przylozenia, stepienie_przylozenia
+
+    
+    data = {'Ilość przejść przyłożenia':[i[4] for i in r],'Ilość przejść natarcia':[i[2] for i in r], 
+            'Czas [min]':[i[0] for i in r], 'Koszt [zł]':[i[1] for i in r], 
+            'Pow. natarcia [um]':[i[3] for i in r], 'Pow. przyłożenia [um]':[i[5] for i in r]}
+    data = pd.DataFrame(data,columns=['Ilość przejść przyłożenia','Ilość przejść natarcia','Czas [min]','Koszt [zł]','Pow. natarcia [um]','Pow. przyłożenia [um]'])
+    return data.to_dict('records')
+
+
+    
+
 
 ##---------------------------------Options---------------------------------------##
 
-# Add new broach button
+# Add new broach type button
 @app.callback(
     Output('params-datatable', 'data'),
     Input('editing-rows-button', 'n_clicks'),
@@ -701,19 +897,20 @@ def add_row(n_clicks, rows, columns):
         rows.append({c['id']: '' for c in columns}) 
         return rows
     else:  
-        # Refreshing tbale on reload
+        # Refreshing table on reload
         sql = sql_connection.SQLConnection(debug=True)
-        table_columns_names = convert_sql_output(sql.get_broach_params_names())
-        params_df = pd.DataFrame(sql.get_broach_params_values())
+        table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
+        params_df = pd.DataFrame(sql.get_table_values('TypeOfBroach'))
         params_df.columns = table_columns_names
         rows = params_df.to_dict('records') 
         sql = None
         return rows     
 
-# Info alert    
+# Info alert - params   
 @app.callback(
     [Output('info-alert', 'color'),
-    Output('info-alert', 'children')],
+    Output('info-alert', 'children'),
+    Output('broach-datatable','dropdown')],
     Input('submit-rows-button', 'n_clicks'),
     State('params-datatable', 'data')
     )
@@ -722,15 +919,56 @@ def upload_to_sql(n_clicks,data):
     if n_clicks > 0:
         sql = sql_connection.SQLConnection(debug=True)
         success = sql.update_broach_params(data)
-        table_columns_names = convert_sql_output(sql.get_broach_params_names())
-        params_df = pd.DataFrame(sql.get_broach_params_values())
+        table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
+        params_df = pd.DataFrame(sql.get_table_values('TypeOfBroach'))
+        params_df.columns = table_columns_names
+        params_data = params_df.to_dict('records')
+        sql = None
+        if(success == 1):return 'success',"Data updated successfuly.",update_types_dropdown()
+        else: return 'danger',"Data doesn't match predefined types or there are some blank columns.",update_types_dropdown()  
+    else: return 'info',"Input all template parameters and press submit to save record in the database.",update_types_dropdown()
+
+# Add new broach button
+@app.callback(
+    Output('broach-datatable', 'data'),
+    Input('editing-broach-button', 'n_clicks'),
+    State('broach-datatable', 'data'),
+    State('broach-datatable', 'columns'))
+def add_row(n_clicks, rows, columns):
+    if n_clicks > 0:
+        # Add new line when button cliked at least once
+        rows.append({c['id']: '' for c in columns}) 
+        return rows
+    else:  
+        # Refreshing table on reload
+        sql = sql_connection.SQLConnection(debug=True)
+        table_columns_names = convert_sql_output(sql.get_table_names('Broach'))
+        params_df = pd.DataFrame(sql.get_table_values('Broach'))
+        params_df.columns = table_columns_names
+        rows = params_df.to_dict('records') 
+        sql = None
+        return rows   
+
+# Info alert - broach 
+@app.callback(
+    [Output('info-alert2', 'color'),
+    Output('info-alert2', 'children')],
+    Input('submit-broach-button', 'n_clicks'),
+    State('broach-datatable', 'data')
+    )
+def upload_to_sql(n_clicks,data):
+    print('nclicks',n_clicks)
+    if n_clicks > 0:
+        sql = sql_connection.SQLConnection(debug=True)
+        success = sql.define_new_broach(data)
+        table_columns_names = convert_sql_output(sql.get_table_names('Broach'))
+        params_df = pd.DataFrame(sql.get_table_values('Broach'))
         params_df.columns = table_columns_names
         params_data = params_df.to_dict('records')
         sql = None
         if(success == 1):return 'success',"Data updated successfuly."
-        else: return 'danger',"Data doesn't match predefined types or there are some blank columns."  
-    else: return 'info',"Input all template parameters and press submit to save record in the database."
-
+        else: return 'danger',"Data doesn't match predefined types."
+    else: return 'info',"Input broach parameters and press submit to save record in the database."
 
 ##---------------------------------Scanning---------------------------------------##
 

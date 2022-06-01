@@ -196,19 +196,18 @@ class SQLConnection:
     def select_from_view(self, scan_name, param_name, conditions=''):
         if len(conditions)>0: conditions = "and " + conditions 
         insertStatement = "SELECT tooth_number, row_number, {}, image_name FROM [View_1] WHERE nazwa=\'{}\' {};".format(param_name, scan_name, conditions)
-        print(insertStatement)
         self.cursor.execute(insertStatement)
         data = self.cursor.fetchall()
         return data
     
-    def get_broach_params_names(self):
-        insertStatement = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = \'TypeOfBroach\''
+    def get_table_names(self,table_name):
+        insertStatement = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = \'{}\''.format(table_name)
         self.cursor.execute(insertStatement)
         data = self.cursor.fetchall()
         return data
     
-    def get_broach_params_values(self):
-        insertStatement = 'SELECT * FROM TypeOfBroach'
+    def get_table_values(self,table_name):
+        insertStatement = 'SELECT * FROM {}'.format(table_name)
         self.cursor.execute(insertStatement)
         data = self.cursor.fetchall()
         return data
@@ -254,64 +253,101 @@ class SQLConnection:
             if(data): base = 1 
             else: base = 0
 
+            # Duplicated ids
+            ids_set = set(ids)
+            contains_duplicates = len(ids) != len(ids_set)
+            if contains_duplicates == True:
+                print("Can't add 2 broach types with the same id")
+                return -1
+
             # Create record
             if(base == 0):
                 # insertStatement = "UPDATE TypeOfBroach SET {} WHERE ID={}".format(params, id)
                 insertStatement = "INSERT INTO TypeOfBroach (ID, {}) VALUES ({},{})".format(params_c1, id, params_c2) 
-                if(self.debug): print(insertStatement)
                 print('Create')
 
             # Update record
             if(base == 1):
                 insertStatement = "UPDATE TypeOfBroach SET {} WHERE ID={}".format(params_u, id)
-                if(self.debug): print(insertStatement)
                 print('Update')
 
             # Execute insert statement
             try:
+                if(self.debug): print(insertStatement)
                 self.cursor.execute(insertStatement)
                 self.conn.commit()
                 print("Executed succesfuly")
             except:
                 print('Can not upload declared row')
                 return -1
-        
-        
-        print(np.array(ids))
-        # Get all ids from the database
-        self.cursor.execute('SELECT ID FROM TypeOfBroach')
-        data = self.cursor.fetchall()
-        data = np.array(data)
-        data = np.reshape(data,(-1))
-        print(np.array(data))
-
         return 1
 
+    def define_new_broach(self,data): 
+        ids = [] # All ids from table
+        for row in data:
+            id = row['ID']
+            ids.append(id)
+            # Check if id is valid, if return error
+            if(not id): 
+                print('No ID in row')
+                return -1
+            # Find all columns names
+            keys = []
+            for key in row:
+                if(key!='ID'):keys.append(key)
+            # Fill columns with data
+            params_u, params_c1, params_c2 = '','',''
+            for i,key in enumerate(keys):
+                v = str(row[key])
+                # Formatting issues
+                if v == 'True': v='1'
+                if v == 'False': v='0'
+                if key == 'DateOfEntry' or key == 'ScrappingDate':v = " \'{}\' ".format(v)
+                # Creating insert Statement parameters
+                if(i+1==len(keys)): 
+                    params_u += str(key) + '=' + v
+                    params_c1 += str(key)
+                    params_c2 += v
+                else: 
+                    params_u += str(key) + '=' + v + ', '
+                    params_c1 += str(key) + ', '
+                    params_c2 += v + ', '
+            
+            # Check if id from table exist in database
+            self.cursor.execute('SELECT ID FROM Broach WHERE ID={}'.format(id))
+            data = self.cursor.fetchall()
+            data = np.array(data)
+            data = np.reshape(data,(-1))
+            if(data): base = 1 
+            else: base = 0
 
+            # Duplicated ids
+            ids_set = set(ids)
+            contains_duplicates = len(ids) != len(ids_set)
+            if contains_duplicates == True:
+                print("Can't add 2 broaches with the same id")
+                return -1
+           
+            # Create record
+            if(base == 0):
+                # insertStatement = "UPDATE TypeOfBroach SET {} WHERE ID={}".format(params, id)
+                insertStatement = "INSERT INTO Broach (ID, {}) VALUES ({},{})".format(params_c1, id, params_c2) 
+                print('Create')
 
+            # Update record
+            if(base == 1):
+                insertStatement = "UPDATE Broach SET {} WHERE ID={}".format(params_u, id)
+                print('Update')
 
-
-'''
-delete_list = [
-    '22-03-02-14-14',
-    '22-03-14-11-46',
-    '22-03-15-11-32',
-    '22-03-15-11-35',
-    '22-03-15-11-49',
-    '22-03-17-12-49',
-    '22-03-17-13-55',
-    '22-03-17-13-56',
-    '22-03-22-15-04',
-    '22-03-23-10-04'
-    ]
-
-sql = SQLConnection(debug=False)
-
-
-for nazwa in delete_list:
-    insertStatement = 'DELETE FROM SKAN WHERE nazwa=\'{}\''.format(nazwa)
-    print(insertStatement)
-    sql.cursor.execute(insertStatement)
-    sql.conn.commit()
-'''
-
+            insertStatement = insertStatement.replace('\'None\'','null')
+            # Execute insert statement
+            try:
+                if(self.debug): print(insertStatement)
+                self.cursor.execute(insertStatement)
+                self.conn.commit()
+                print("Executed succesfuly")
+            except:
+                print('Can not upload declared row')
+                return -1
+                
+        return 1
