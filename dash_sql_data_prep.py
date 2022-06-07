@@ -10,10 +10,10 @@ import sql_connection
 import shutil
 
 # User define variables
-SCAN_NAME = '22-05-11-11-52'    # Current date as scan name (can be replaced with automatic generator)
+SCAN_NAME = '22-06-06-12-17-full'    # Current date as scan name (can be replaced with automatic generator)
 
 # Program variables
-INPUT_PATH = r'I:\for_ml_19_07\images'    # Path to the folder with the images directly from scaner
+INPUT_PATH = r'I:\SKANY_2D_PRZEROBIONE_CZERWIEC\11033_20210721_180502'    # Path to the folder with the images directly from scaner
 OUTPUT_IMG_PATH  = r'D:\Konrad\TCM_scan\dash_sql/'   # Path to the folder with processed images_F
 OUTPUT_IMG_PATH = OUTPUT_IMG_PATH + SCAN_NAME
 
@@ -52,13 +52,19 @@ def decode_segmentation(im, imageName):
     pred_masks_instance_stepienie = []
     output_stepienie = np.zeros_like(im)
     j = 0
+    blunt = False # chech if there is at least 1 valid blunt
     for i in range(num_instances): # Combine each 'stepienie' binary mask
         if(pred_classes[i] == 2):
             pred_masks_instance_stepienie.append(pred_masks[:, :, i:(i+1)])
-            output_stepienie = np.where(pred_masks_instance_stepienie[j] == True, 255, output_stepienie)
+
+            out_tpl = np.nonzero(pred_masks_instance_stepienie[j])        
+            if max(out_tpl[1])/pred_masks_instance_stepienie[j].shape[1] > 0.8: # check if the blunt is at the bottom of the image if not - skip (it can be improved)
+                output_stepienie = np.where(pred_masks_instance_stepienie[j] == True, 255, output_stepienie)
+                blunt = True
             j+=1
     blunt_value = 0
-    if(2 in pred_classes): # If there was at least 1 'stepienie' instance save results
+
+    if(blunt): # If there was at least 1 'stepienie' instance save results
         im = Image.fromarray(output_stepienie)
         out_png_name = OUTPUT_IMG_PATH + r'\stepienie_analyze' + '\\' + base_name  + '.png'
         im = ImageOps.grayscale(im)
@@ -188,8 +194,15 @@ def row_inference():
             img_path = OUTPUT_IMG_PATH + r'/stepienie_analyze/' + image_name
             stepienie = cv.imread(img_path,cv.IMREAD_GRAYSCALE)
             cv.normalize(stepienie, stepienie, 0, 8, norm_type = cv.NORM_MINMAX) # Normalize pixels on the image 
-            containers[int(miny[i]):stepienie.shape[0]+int(miny[i]), int(minx[i]):stepienie.shape[1]+int(minx[i])] += stepienie # Combine images 
-
+            # Previous extracted img borders expanding cause some problems with big teeth with lay very close to the border
+            # If those tooth would lay to close or to far move it in one or other way
+            try:
+                containers[int(miny[i]):stepienie.shape[0]+int(miny[i]), int(minx[i]):stepienie.shape[1]+int(minx[i])] += stepienie # Combine images 
+            except:
+                try:
+                    containers[int(miny[i]):stepienie.shape[0]+int(miny[i]), int(minx[i])-100:stepienie.shape[1]+int(minx[i])-100] += stepienie # Combine images 
+                except:
+                    containers[int(miny[i]):stepienie.shape[0]+int(miny[i]), int(minx[i])+100:stepienie.shape[1]+int(minx[i])+100] += stepienie # Combine images 
         # Calculate combined 'stepienie' size
         row_stepienie = draw_plot(containers,row_number) 
         print('row_number: {} stepienie: {:0.3f} mm'.format(row_number,row_stepienie))
@@ -255,7 +268,6 @@ def draw_plot(img,name):
     print(' ')
     print(sql.get_tooth_param(SCAN_NAME,'tooth_number','1'))
     '''
-
 
 files = list(os.listdir(INPUT_PATH))
 for image_name in files: # Process all available images
