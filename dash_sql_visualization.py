@@ -165,13 +165,13 @@ available_dropdown_indicators = ['Orginal', 'Extraction', 'Segmentation'] # User
 SUBFOLDERS = [r'\images', r'\otsu_tooth', r'\otsu_tooth'] # Corresponding directories
 
 # Available heatmap modes
-available_color_indicators = ['Lenght', 'Width', 'Center coordinate - y', 'Center coordinate - x', 'Number of failures','Stępienie', 'Narost', 'Zatarcie', 'Wykruszenie'] # User visible names
+available_color_indicators = ['Lenght', 'Width', 'Center coordinate - y', 'Center coordinate - x', 'Number of failures','Flank wear', 'Build-up edge', 'Abrasive wear', 'Notching'] # User visible names
 COLORS = ['length', 'width','centre_lenght', 'centre_width', 'num_instances', 'stepienie', 'narost', 'zatarcie', 'wykruszenie'] # Corresponding SQL colums names
 
 # Base categories and information displayed in the Tooth report table
 data = OrderedDict(
     [
-        ("Parameter", ["Wysokość", "Szerokość", "Położenie dłgość", "Położenie wysokość", "Stępienie zęba", "Stępienie rzędu"]),
+        ("Parameter", ["Length", "Width", "Coordinate x", "Coordinate y", "Tooth flank wear", "Cumulated flank wear"]),
         ("Value [mm]", [0, 0, 0, 0, 0, 0]),
     ]
 )
@@ -192,6 +192,7 @@ available_template_indicators = ['Example Type 1', 'Example Type 2', 'Example Ty
 # Layout global styling parameters
 cards_st ={"height": 660,"font-family": "Arial"}
 cards_st_options ={"height": 480,"font-family": "Arial"}
+cards_st_optimazation={"height": 800,"font-family": "Arial"}
 font_st = {'font-size':'20px','height':'35px',"font-family": "Arial"}
 
 # Utilized graphics
@@ -290,7 +291,7 @@ def show_selected_params(project, return_type):
     table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
     sql = None
     data.columns = table_columns_names
-    data = data[["Project","AngleOfAttack","AngleOfClerance","AngleOfBack","NominalTootHeight"]]
+    data = data[["Project","MinimalTootHeightLoss","MinimalToothLength","ModelBluntAngle","AngleOfAttack","AngleOfClerance","AngleOfBack","NominalTootHeight"]]
     data = data[data["Project"]==project]
     if(return_type==1): 
         return data.to_dict('records')
@@ -299,6 +300,7 @@ def show_selected_params(project, return_type):
 def show_selected_broach_params(scan_name, return_type):
     # 1 - return values 0 - return columns names
     sql = sql_connection.SQLConnection(debug=False)
+    # Chose proper blunt vaule: used defined if exists deafoult if not
     y = convert_sql_output(sql.get_row_param(scan_name,'stepienie_row_value'))
     x = convert_sql_output(sql.get_row_param(scan_name,'row_number'))
     y_correction = convert_sql_output(sql.get_row_param(scan_name,'stepienie_correction'))
@@ -306,13 +308,34 @@ def show_selected_broach_params(scan_name, return_type):
     for i in range(len(y)):
         if y_correction[i] is not None: blunt_value.append(y_correction[i]) 
         else: blunt_value.append(y[i])
+    
+    # During saving to the SQL rows are saved in weried order for ex. 1,10,12,2,20 instead of 1,2,10,12,20
+    # Due to this fact it is required to sort list of the teeth to find proper row number  
+
+    # Find row number with the biggest cumulated blunt    
     max_blunt_value = max(blunt_value)
-    max_blunt_row = blunt_value.index(max_blunt_value)
-    tooth_length = statistics.mean(convert_sql_output(sql.get_tooth_param(scan_name,'length',max_blunt_row)))
-    print(max_blunt_row,max_blunt_value,tooth_length)
+    available_rows = convert_sql_output(sql.get_row_param(scan_name,'row_number'))
+    zipped_lists = zip(available_rows, blunt_value)
+    sorted_pairs = sorted(zipped_lists)
+    tuples = zip(*sorted_pairs)
+    _, blunt_value = [ list(tuple) for tuple in  tuples]
+    max_blunt_row = blunt_value.index(max_blunt_value) + 1
+
+    # Find row number with min mean lenght of the teeth row
+    available_rows.sort()
+    tooth_lengths = []
+    for row in available_rows:
+        l = convert_sql_output(sql.get_tooth_param(scan_name,'length',row))
+        l = list(filter(None, l)) # Remmove None if exist in returned data
+        L = (statistics.mean(l))
+        tooth_lengths.append(L)
+    min_tooth_length = min(tooth_lengths) 
+    min_tooth_length_row = tooth_lengths.index(min_tooth_length) + 1
+
+    
     sql = None
-    data = {'Scan':[scan_name], 'Row number':[max_blunt_row], 'Max blunt value [mm]':[round(max_blunt_value,3)], 'Tooth lenght [mm]':[round(tooth_length,3)]}
-    data = pd.DataFrame(data,columns=['Scan','Row number','Max blunt value [mm]','Tooth lenght [mm]'])
+    data = {'Scan':[scan_name], 'Max blunt row no.':[max_blunt_row], 'Max blunt value [mm]':[round(max_blunt_value,3)],'Min lenght row no.':[min_tooth_length_row], 'Tooth min lenght [mm]':[round(min_tooth_length,3)]}
+    data = pd.DataFrame(data,columns=['Scan','Max blunt row no.','Max blunt value [mm]','Min lenght row no.','Tooth min lenght [mm]'])
     if(return_type==1): 
         return data.to_dict('records')
     else:
@@ -349,6 +372,11 @@ def update_types_dropdown():
         },
     }
     return dropdown
+
+# Optimization regeneration types table column names (to keep names used as keys in various planes in one place)
+type_I = ['Time [min]','Cost [zł]','Operations no. front','Front surface [um]']
+type_top = ['Time [min]','Cost [zł]','Operations no. top','Top surface [um]']
+type_II = ['Time [min]','Cost [zł]','Operations no. front','Front surface [um]','Operations no. top','Top surface [um]']
 
 # Layout structures
 scanning = html.Div([
@@ -426,10 +454,10 @@ scanning = html.Div([
                             dcc.Checklist(
                                 id = 'draw',
                                 options=[      
-                                    {'label': ' Narost\n', 'value': 1},
-                                    {'label': ' Stępienie\n', 'value': 2},
-                                    {'label': ' Zatarcie\n', 'value': 3},
-                                    {'label': ' Wykruszenie\n', 'value': 4}
+                                    {'label': ' Build-up edge\n', 'value': 1},
+                                    {'label': ' Flank wear\n', 'value': 2},
+                                    {'label': ' Abrasive wear\n', 'value': 3},
+                                    {'label': ' Notching\n', 'value': 4}
                                 ],
                                 labelStyle={'display': 'block', 'text-align': 'justify', 'margin-bottom':'7px', 'margin-left':'15px', 'height':'25px', 'font-size':'20px',"font-family": "Arial"},
                                 value=[1,2,3,4],
@@ -460,7 +488,7 @@ scanning = html.Div([
                                 style_header={'textAlign': 'center', 'fontWeight': 'bold', 'margin':'10px','font-size':'20px',"font-family": "Arial"}
                             ),
                             html.Br(),
-                            html.H3('Modify blunt value:'),
+                            html.H3('Modify flank wear value:'),
 
                             html.Div(dcc.Input(id='input-on-submit-row', type='number',placeholder='Row number',style={'font-size': '20px','width': '100%','margin-bottom':'10px'})),
                             html.Div(dcc.Input(id='input-on-submit-blunt', type='number',placeholder='Custom blunt value [mm]',style={'font-size': '20px','width': '100%','margin-bottom':'10px'})),
@@ -468,9 +496,7 @@ scanning = html.Div([
                                 dbc.Button('Submit', id='submit-val', color="secondary" ,n_clicks=0, style={'font-size': '20px'}),  
 
                                 ],className="d-grid gap-2 col-6 mx-auto"
-                            ),
-                            
-                            
+                            ),    
                             html.Div(id='empty-container')
                         ])
                   
@@ -511,7 +537,7 @@ scanning = html.Div([
                 html.Div([
                     dbc.Card([
                         dbc.CardHeader(
-                            html.H2('Stępienie structure in row'),
+                            html.H2('Cumulated flank wear calculation'),
                         ),
                         dbc.CardBody([
                             dcc.Graph(id = 'blunt_plot'),   
@@ -608,9 +634,20 @@ optimazation = html.Div([
                                 style_table = {'overflowX': 'auto','minWidth': '100%'},
                                 fixed_columns = { 'headers': True, 'data': 1 },     
                             ),
+                            html.Br(),
+                            # Scan notes
+                            html.H3('Scan notes:'),
+                            dcc.Textarea(
+                                id='scan-notes',
+                                value='Textarea content initialized\nwith multiple lines of text',
+                                style={'width': '100%', 'height': 140,'font-size':'20px'},
+                            ),
+                            # Scan notes submit
+                            html.Div([
+                                dbc.Button('Submit note', id='note-submit-button', color="secondary" ,n_clicks=0, style={'font-size': '20px'}), 
+                            ]),
                         ]),
-                    ],style = cards_st),
-
+                    ],style = cards_st_optimazation),
                 ]),
                 width=6,
             ),
@@ -622,43 +659,47 @@ optimazation = html.Div([
                             html.H2('Regeneration possibilities'),
                         ),
                         dbc.CardBody([
-                            html.H3('Regeneracja I:'),
+                            html.H3('Regeneration type I "front surface only":'),
                             dash_table.DataTable(
                                 id='regeneration_I',
                                 data = None,
-                                columns = [{'id': c, 'name': c} for c in ['Ilość przejść','Czas [min]','Koszt [zł]','Powierzchnia natarcia [um]']],
+                                columns = [{'id': c, 'name': c} for c in type_I],
                                 page_size = 1,
                                 style_cell = {'font-size':'20px',"font-family": "Arial",'minWidth': '180px'},
                                 style_header = {'textAlign': 'center', 'fontWeight': 'bold', 'margin':'10px','font-size':'20px',"font-family": "Arial", 'height': '50px'},
                                 style_table = {'overflowX': 'auto','minWidth': '100%'},  
                             ),
                             html.Br(), 
-                            html.H3('Regeneracja "z góry":'),
+                            html.H3('Regeneration type "top surface only":'),
                             dash_table.DataTable(
                                 id='regeneration_z_gory',
                                 data = None,
-                                columns = [{'id': c, 'name': c} for c in ['Ilość przejść','Czas [min]','Koszt [zł]','Powierzchnia przyłożenia [um]']],
+                                columns = [{'id': c, 'name': c} for c in type_top],
                                 page_size = 1,
                                 style_cell = {'font-size':'20px',"font-family": "Arial",'minWidth': '180px'},
                                 style_header = {'textAlign': 'center', 'fontWeight': 'bold', 'margin':'10px','font-size':'20px',"font-family": "Arial", 'height': '50px'},
                                 style_table = {'overflowX': 'auto','minWidth': '100%'},
                             ), 
                             html.Br(),
-                            html.H3('Regeneracja II:'),
+                            html.H3('Regeneration type II "mixed":'),
                             dash_table.DataTable(
                                 id='regeneration_II',
                                 data = None,
-                                columns = [{'id': c, 'name': c} for c in ['Ilość przejść przyłożenia','Ilość przejść natarcia','Czas [min]','Koszt [zł]','Pow. natarcia [um]','Pow. przyłożenia [um]']],
-                                page_size = 5,
+                                columns = [{'id': c, 'name': c} for c in type_II],
+                                page_size = 10,
                                 style_cell = {'font-size':'20px',"font-family": "Arial",'minWidth': '180px'},
                                 style_header = {'textAlign': 'center', 'fontWeight': 'bold', 'margin':'10px','font-size':'20px',"font-family": "Arial", 'height': '50px'},
                                 style_table = {'overflowX': 'auto','minWidth': '100%'},
-                            ),
-                               
-                          
+                                style_data_conditional=[
+                                    {
+                                        'if': {'filter_query': '{{Front surface [um]}} > {}'.format(50)},
+                                        'backgroundColor': '#FF4136',
+                                        'color': 'white'
+                                    }
+                                ]
+                            ),             
                         ]),
-                    ],style = cards_st),
-
+                    ],style = cards_st_optimazation),
                 ]),
                 width=6,
             ),  
@@ -809,7 +850,6 @@ def display_page(pathname):
         return index_page
 
 
-
 ##-------------------------------Optimization-------------------------------------##
 
 # Scan select
@@ -836,11 +876,11 @@ def get_params(default_broach):
 )
 def create_output(scan_data,type_data):
     stepienie = scan_data[0]['Max blunt value [mm]']
-    dlugosc = scan_data[0]['Tooth lenght [mm]']
+    dlugosc = scan_data[0]['Tooth min lenght [mm]']
     czas, koszt, ilosc_przejsc = optimize.regeneration_I_calculate_outputs(stepienie)
     print(czas,koszt)
-    data = {'Ilość przejść':[ilosc_przejsc], 'Czas [min]':[round(czas,0)], 'Koszt [zł]':[round(koszt,2)], 'Powierzchnia natarcia [um]':[stepienie*1000]}
-    data = pd.DataFrame(data,columns=['Ilość przejść','Czas [min]','Koszt [zł]','Powierzchnia natarcia [um]'])
+    data = {type_I[0]:[round(czas,0)], type_I[1]:[round(koszt,2)],type_I[2]:[ilosc_przejsc], type_I[3]:[stepienie*1000]}
+    data = pd.DataFrame(data,columns=type_I)
     print(data.to_dict('records'))
     return data.to_dict('records')
 
@@ -852,11 +892,11 @@ def create_output(scan_data,type_data):
 )
 def create_output(scan_data,type_data):
     stepienie = scan_data[0]['Max blunt value [mm]']
-    dlugosc = scan_data[0]['Tooth lenght [mm]']
+    dlugosc = scan_data[0]['Tooth min lenght [mm]']
     czas, koszt, ilosc_przejsc, stepienie = optimize.regeneration_z_gory_calculate_outputs(stepienie)
     print(czas,koszt)
-    data = {'Ilość przejść':[ilosc_przejsc], 'Czas [min]':[round(czas,0)], 'Koszt [zł]':[round(koszt,2)], 'Powierzchnia przyłożenia [um]':[stepienie*1000]}
-    data = pd.DataFrame(data,columns=['Ilość przejść','Czas [min]','Koszt [zł]','Powierzchnia przyłożenia [um]'])
+    data = { type_top[0]:[round(czas,0)], type_top[1]:[round(koszt,2)], type_top[2]:[ilosc_przejsc], type_top[3]:[stepienie*1000]}
+    data = pd.DataFrame(data,columns=type_top)
     print(data.to_dict('records'))
     return data.to_dict('records')
 
@@ -868,20 +908,115 @@ def create_output(scan_data,type_data):
 )
 def create_output(scan_data,type_data):
     stepienie = scan_data[0]['Max blunt value [mm]']
-    dlugosc = scan_data[0]['Tooth lenght [mm]']
+    dlugosc = scan_data[0]['Tooth min lenght [mm]']
     r = optimize.regeneration_II_calculate_outputs(stepienie)
-    # czas_calkowity, koszt, ilosc_przejsc_natarcia, stepienie_natarcia,  ilosc_przejsc_przylozenia, stepienie_przylozenia
-
-    
-    data = {'Ilość przejść przyłożenia':[i[4] for i in r],'Ilość przejść natarcia':[i[2] for i in r], 
-            'Czas [min]':[i[0] for i in r], 'Koszt [zł]':[i[1] for i in r], 
-            'Pow. natarcia [um]':[i[3] for i in r], 'Pow. przyłożenia [um]':[i[5] for i in r]}
-    data = pd.DataFrame(data,columns=['Ilość przejść przyłożenia','Ilość przejść natarcia','Czas [min]','Koszt [zł]','Pow. natarcia [um]','Pow. przyłożenia [um]'])
+    data = {type_II[0]:[i[0] for i in r], type_II[1]:[i[1] for i in r], 
+            type_II[2]:[i[2] for i in r], type_II[3]:[i[3] for i in r], 
+            type_II[4]:[i[4] for i in r], type_II[5]:[i[5] for i in r]}
+    data = pd.DataFrame(data,columns=type_II)
     return data.to_dict('records')
 
+@app.callback(
+    Output('scan-notes', 'value'),
+    Input('scan-select', 'value')
+)
+def update_output(value):
+    sql = sql_connection.SQLConnection(debug=False)
+    note = str(convert_sql_output(sql.get_scan_param(param_name ='scan_notes', scan_name = value))[0] )
+    if note == 'None': note = ''
+    sql = None
+    return note
 
-    
+'''
+# Add new broach button
+@app.callback(
+    Output('broach-datatable', 'data'),
+    Input('note-submit-button', 'n_clicks'),
+    State('broach-datatable', 'data'),
+    State('broach-datatable', 'columns'))
+def add_row(n_clicks, rows, columns):
+    if n_clicks > 0:
+        # Add new line when button cliked at least once
+        rows.append({c['id']: '' for c in columns}) 
+        return rows
+    else:  
+        # Refreshing table on reload
+        sql = sql_connection.SQLConnection(debug=True)
+        table_columns_names = convert_sql_output(sql.get_table_names('Broach'))
+        params_df = pd.DataFrame(sql.get_table_values('Broach'))
+        params_df.columns = table_columns_names
+        rows = params_df.to_dict('records') 
+        sql = None
+        return rows 
+'''
+@app.callback(
+    Output('regeneration_II', 'style_data_conditional'),
+    [Input('scan-simple-datatable', 'data'),
+    Input('params-simple-datatable', 'data')]
+)
+def create_output(scan_data,type_data):
+    lenght = scan_data[0]['Tooth min lenght [mm]']
+    #min_acceptable_lenght = type_data[0]['MinimalToothLenght']*1000 #[um] 
+    min_acceptable_lenght = 1200 #[um]
+    lenght*=1000 #[um]
+    return conditional_table_cells_formating(type_II[3],lenght, min_acceptable_lenght, 50, type_II[5], 80, 40, 20)
 
+@app.callback(
+    Output('regeneration_I', 'style_data_conditional'),
+    [Input('scan-simple-datatable', 'data'),
+    Input('params-simple-datatable', 'data')]
+)
+def create_output(scan_data,type_data):
+    lenght = scan_data[0]['Tooth min lenght [mm]']
+    lenght*=1000 #[um]
+    min_acceptable_lenght = 1200 #[um] 
+    return conditional_table_cells_formating(type_I[3],lenght, min_acceptable_lenght, 50, None, 80, 40, 20)
+
+@app.callback(
+    Output('regeneration_z_gory', 'style_data_conditional'),
+    [Input('scan-simple-datatable', 'data'),
+    Input('params-simple-datatable', 'data')]
+)
+def create_output(scan_data,type_data):
+    lenght = scan_data[0]['Tooth min lenght [mm]']
+    lenght*=1000 #[um]
+    min_acceptable_lenght = 1200 #[um] 
+    min_acceptable_height = 80 #[um]
+    return conditional_table_cells_formating(None,lenght, min_acceptable_lenght, 50, type_top[3], 80, 40, 20)
+
+
+def conditional_table_cells_formating(field,value,border,offest,field2,value2,border2,offest2):
+    style_data_conditional=[
+        {
+        'if': {
+            'filter_query': '{{{}}} > {}'.format('Front surface [um]',value-border-offest),
+            'column_id': '{}'.format(field)
+        },
+        'backgroundColor': '#FFFF00',
+        },
+        {
+        'if': {
+            'filter_query': '{{{}}} > {}'.format('Front surface [um]',value-border),
+            'column_id': '{}'.format(field)
+        },
+        'backgroundColor': '#FF4500',
+        },
+        {
+        'if': {
+            'filter_query': '{{{}}} > {}'.format('Top surface [um]',value2-border2-offest2),
+            'column_id': '{}'.format(field2)
+        },
+        'backgroundColor': '#FFFF00',
+        },
+        {
+        'if': {
+            'filter_query': '{{{}}} > {}'.format('Top surface [um]',value2-border2),
+            'column_id': '{}'.format(field2)
+        },
+        'backgroundColor': '#FF4500',
+        }
+    ]
+    return style_data_conditional    
 
 ##---------------------------------Options---------------------------------------##
 
@@ -1146,7 +1281,7 @@ def update_bar_chart(value,FOLDER_NAME,nclicks):
     fig.add_trace(correction)
     fig.update_layout(transition_duration = 200, 
                       height = 150, template = "seaborn",
-                      yaxis=dict(title_text = "STĘPIENIE", titlefont=dict(size=20)),
+                      yaxis=dict(title_text = "Flank wear", titlefont=dict(size=20)),
                       xaxis=dict(title_text = None, titlefont=dict(size=20), tickvals = displayed_x_indicators),
                       margin=dict(l = 10, r = 130, t = 3, b = 20),hoverlabel = dict( bgcolor="white",font_size=20,font_family="Arial"))
     fig.update_coloraxes(showscale = False)
@@ -1255,7 +1390,7 @@ def update_table(clickData,value,FOLDER_NAME,draw_pick):
 
     data = OrderedDict(
         [
-            ("Parameter", ["Lenght", "Width", "Coordinate x", "Coordinate y", "Tooth stępienie", "Row stępienie"]),
+            ("Parameter", ["Lenght", "Width", "Coordinate x", "Coordinate y", "Tooth flank wear", "Cumulated flank wear"]),
             ("Value [mm]", [display[0], display[1], display[2], display[3], display[4], st]),
         ]
     )

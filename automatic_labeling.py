@@ -1,4 +1,4 @@
-'''
+r'''
 Program prepares labelme .json annotation files based on predictions 
 of the detectron2 model. It requires extracted teeth images linked by 
 "pth" directory. Overlapping instances of the same class are merged. 
@@ -15,11 +15,12 @@ import numpy as np
 from matplotlib.image import imread
 import scipy.misc
 from PIL import Image  
-import glob
 from matplotlib.image import imread
+from tkinter import filedialog
 
 # Path to the folder with extracted teeth images utilized for automatic annotations
-pth = r'D:\Konrad\TCM_scan\traning_segmentation\test3_alicona\\'
+pth = filedialog.askdirectory(title="Select path to input").replace('/','\\')
+
 
 models = prepare_models.Models()
 segmentation_predictor = models.preapre_segmentation_model()
@@ -28,34 +29,34 @@ segmentation_predictor = models.preapre_segmentation_model()
 labelme_start = '''{
 "version": "4.5.10",
 "flags": {},
-"shapes": [
+"shapes": [ 
 '''
 def labelme_end(filename,h,w):
-    labelme_end = '''],
-"imagePath": "{}",
+    labelme_end = f'''],
+"imagePath": "{filename}",
 "imageData": null,
-"imageHeight": {},
-"imageWidth": {}
-'''.format(filename,h,w)
+"imageHeight": {h},
+"imageWidth": {w}
+'''
     return labelme_end
 def add_points(label,contour):
     '''
-    Approximate single the contour passed to the function.
+    Approximate a single contour passed to the function.
     Use eps approximation parameter to adjust number of points 
     higher eps ==> less points
     '''
-    eps = 0.005 
+    eps = 0.003 
     peri = cv.arcLength(contour, True)
     approx = cv.approxPolyDP(contour, eps * peri, True)
     cont = np.vstack(approx).squeeze().tolist()
-    content = '''
-"label": "{}",
-"points": {},
+    content = f'''
+"label": "{label}",
+"points": {cont},
 "group_id": null,
 "shape_type": "polygon",
-"flags": {}
-'''.format(label,cont,'{}')
-    return str(content)
+"flags": {r'{}'}
+'''
+    return content
 
 failures_dictionary = {
     0:"wykruszenie",
@@ -64,10 +65,14 @@ failures_dictionary = {
     3:"zatarcie"   
 }
 
+list_images = list() # store all image files
+for filename in os.listdir(pth): # Iterate over all images in folder
+    if not ".png" in filename: continue
+    list_images.append(filename)
 
-for imageName in glob.glob(pth + '*png'): # Iterate over all images in folder
-    print(imageName)
-    im = cv.imread(imageName)
+for idx_file,imageName in enumerate(list_images): # Iterate over all images in folder
+    print(f"Auto labeling image: {imageName} --- {idx_file+1}/{len(list_images)}")
+    im = cv.imread(os.path.join(pth,imageName))
     outputs = segmentation_predictor(im) # Make prediction 
     name = imageName.split('\\')[-1]
     img = Image.fromarray(im)
@@ -121,10 +126,12 @@ for imageName in glob.glob(pth + '*png'): # Iterate over all images in folder
     labelme_json = labelme_json[:-2]
     labelme_json += labelme_end(base_name + '.png',img.size[1],img.size[0]) # Add some additional information
     labelme_json += '}' # Clossing requires by .json format
-    out_txt_name = pth + base_name  + '.json'
+    out_txt_name = os.path.join(pth, f"{base_name}.json")
     # Save labelme json file
     file = open(out_txt_name, 'w')
     file.write(str(labelme_json))
     file.close() 
+    print(f"{file} generated!")
 
+print("DATA LABELED")
     

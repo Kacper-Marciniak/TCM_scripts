@@ -3,6 +3,10 @@ import pymssql
 import numpy as np
 
 class SQLConnection:
+    '''
+    Module used to establish saving and reading SQL database for application enviornment
+    '''
+    
     def __init__(self,debug=False):
         # Initialize SQL connection
         self.current_scan_id = -1
