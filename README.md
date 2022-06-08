@@ -1,4 +1,5 @@
 # Broach teeth detection, classification & segmentation, supervized learning 
+> This repositorium is a modified version of https://github.com/konrad98ft/TCM_scripts
 > Machine vision development software utilized for inspection of the broach teeth. It presents 2 step inference.
 > Images captured by the camera are extracted from the background by 1st model, 2nd one is responsible for failures segmentation. 
 > Result are displayed in dedicated the application. 
@@ -54,7 +55,7 @@ Project is: _in progress_
 - Optimization of the sharpening strategy for teeth
 
 ## Experiments tracking
-Neptune [click here](https://app.neptune.ai/konrad98ft/test/e/TES-18/dashboard/Main-parameters-7caf51a4-a646-4ec9-972b-f80d6dd62c5b)
+Neptune [click here](https://app.neptune.ai/kacper-marciniak/)
 
 
 

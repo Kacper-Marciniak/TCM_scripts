@@ -8,22 +8,29 @@ After controll it files from "pth" dir can be put into:
 '\traning_segmentation\data\anot' and utilized for datasets creation.
 '''
 
+import tkinter
 import prepare_models
 import os
 import cv2 as cv
 import numpy as np
-from matplotlib.image import imread
-import scipy.misc
 from PIL import Image  
-from matplotlib.image import imread
-from tkinter import filedialog
+
+from tkinter_dialog_custom import askdirectory
+
+from PARAMETERS import DICTIONARY_FAILURES
+from PARAMETERS import LABELING_EPS_VALUE
 
 # Path to the folder with extracted teeth images utilized for automatic annotations
-pth = filedialog.askdirectory(title="Select path to input").replace('/','\\')
 
+
+path_to_data = askdirectory(title="Select path to input").replace('/','\\')
+
+if path_to_data == None: exit()
 
 models = prepare_models.Models()
 segmentation_predictor = models.preapre_segmentation_model()
+
+failures_dictionary = DICTIONARY_FAILURES
 
 # Utilized to create labelme json file
 labelme_start = '''{
@@ -45,7 +52,7 @@ def add_points(label,contour):
     Use eps approximation parameter to adjust number of points 
     higher eps ==> less points
     '''
-    eps = 0.003 
+    eps = LABELING_EPS_VALUE
     peri = cv.arcLength(contour, True)
     approx = cv.approxPolyDP(contour, eps * peri, True)
     cont = np.vstack(approx).squeeze().tolist()
@@ -58,21 +65,14 @@ def add_points(label,contour):
 '''
     return content
 
-failures_dictionary = {
-    0:"wykruszenie",
-    1:"narost",
-    2:"stepienie",
-    3:"zatarcie"   
-}
-
 list_images = list() # store all image files
-for filename in os.listdir(pth): # Iterate over all images in folder
+for filename in os.listdir(path_to_data): # Iterate over all images in folder
     if not ".png" in filename: continue
     list_images.append(filename)
 
 for idx_file,imageName in enumerate(list_images): # Iterate over all images in folder
     print(f"Auto labeling image: {imageName} --- {idx_file+1}/{len(list_images)}")
-    im = cv.imread(os.path.join(pth,imageName))
+    im = cv.imread(os.path.join(path_to_data,imageName))
     outputs = segmentation_predictor(im) # Make prediction 
     name = imageName.split('\\')[-1]
     img = Image.fromarray(im)
@@ -87,18 +87,18 @@ for idx_file,imageName in enumerate(list_images): # Iterate over all images in f
     
     # Contains merged bitmaps for particular failures classes
     outputs = {
-        "wykruszenie": np.zeros_like(im),
-        "narost": np.zeros_like(im),
-        "stepienie": np.zeros_like(im),
-        "zatarcie": np.zeros_like(im)
+        DICTIONARY_FAILURES[0]: np.zeros_like(im),
+        DICTIONARY_FAILURES[1]: np.zeros_like(im),
+        DICTIONARY_FAILURES[2]: np.zeros_like(im),
+        DICTIONARY_FAILURES[3]: np.zeros_like(im)
     }
-
+    
     # Contains temporary data used during merging
     pred_masks_instance = {   
-        "wykruszenie": [],
-        "narost": [],
-        "stepienie": [],
-        "zatarcie": []
+        DICTIONARY_FAILURES[0]: [],
+        DICTIONARY_FAILURES[1]: [],
+        DICTIONARY_FAILURES[2]: [],
+        DICTIONARY_FAILURES[3]: []
     }
 
     # Iterate over predicted defects, search for duplicated instances of the same class and merge them into single bitmap.
@@ -111,27 +111,24 @@ for idx_file,imageName in enumerate(list_images): # Iterate over all images in f
 
     # Iterate over failures classes and convert generated bitmaps, extract contours, approximate it with the points, save it to the .json file       
     for class_name in failures_dictionary.values():
-        im = Image.fromarray(outputs[class_name])
-        im = np.array(im) 
-        im = cv.cvtColor(im, cv.COLOR_BGR2GRAY )   
+        im = cv.cvtColor(np.array(Image.fromarray(outputs[class_name])) , cv.COLOR_BGR2GRAY )   
         contours = cv.findContours(im, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         if len(contours[0]) != 0:
             for c in contours[0]:
                 # Add contour to the labelme json file
-                labelme_json += '{' # Open container for new instance    
-                labelme_json += add_points(class_name,c)
-                labelme_json += '},\n'
+                labelme_json += "{" + add_points(class_name,c) + "},\n"
+                # Open container for new instance 
 
     # Prepare end of the labelme json file
     labelme_json = labelme_json[:-2]
-    labelme_json += labelme_end(base_name + '.png',img.size[1],img.size[0]) # Add some additional information
+    labelme_json += labelme_end(f"{base_name}.png",img.size[1],img.size[0]) # Add some additional information
     labelme_json += '}' # Clossing requires by .json format
-    out_txt_name = os.path.join(pth, f"{base_name}.json")
+    out_txt_name = os.path.join(path_to_data, f"{base_name}.json")
     # Save labelme json file
     file = open(out_txt_name, 'w')
     file.write(str(labelme_json))
     file.close() 
-    print(f"{file} generated!")
+    print(f"{out_txt_name} generated!")
 
-print("DATA LABELED")
+print("ALL DATA LABELED")
     

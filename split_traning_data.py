@@ -2,7 +2,9 @@ import glob, os
 from random import random
 from shutil import copyfile
 
-DATA_PATH = r'D:\Konrad\TCM_scan\traning_segmentation\data'
+from PARAMETERS import PATH_TRAINING_DATA_SEGMENTATION
+
+DATA_PATH = PATH_TRAINING_DATA_SEGMENTATION
 
 val_precentage = 0.15 #15% 
 test_precentage = 0.3 #15% (15-30)
