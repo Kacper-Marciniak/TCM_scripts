@@ -1,13 +1,14 @@
 """
-Parameters used in .py files
+Parameters used in TCM scripts
 """
 
 # ----------------- PATHS ----------------- #
-PATH_TRAINING_OUTPUT_SEGMENTATION = r"Z:\TCM\trening\segmentacja"
+PATH_TRAINING_OUTPUT_DIR_SEGMENTATION = r"Z:\TCM\trening\segmentacja"
 PATH_TRAINING_OUTPUT_DIR_EXTRACTION = r"Z:\TCM\trening\ekstrakcja"
 PATH_MODELS_EXTRACTION = r"Z:\TCM\modele\ekstrakcja"
 PATH_MODELS_SEGMENTATION = r"Z:\TCM\modele\segmentacja"
 PATH_TRAINING_DATA_SEGMENTATION = r"Z:\TCM\trening\DATASETY\segmentacja"
+PATH_TRAINING_DATA_EXTRACTION = r"Z:\TCM\trening\DATASETY\ekstrakcja"
 
 # ----------------- FAILURES ----------------- #
 DICTIONARY_FAILURES = {
@@ -23,5 +24,4 @@ LABELING_EPS_VALUE = 0.003
 # ----------------- NEPTUNE AI ----------------- #
 NEPTUNE_SEGMENTATION_PROJECT_PATH = 'kacper-marciniak/TCM-segmentation'
 NEPTUNE_EXTRACTION_PROJECT_PATH = 'kacper-marciniak/TCM-extraction'
-
 # ----------------- TRENING ----------------- #

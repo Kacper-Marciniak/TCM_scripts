@@ -2,8 +2,8 @@
 > This repositorium is a modified version of https://github.com/konrad98ft/TCM_scripts
 > 
 > Machine vision development software utilized for inspection of the broach teeth. It presents 2 step inference.
-> Images captured by the camera are extracted from the background by 1st model, 2nd one is responsible for failures segmentation. 
-> Result are displayed in dedicated the application. 
+> Images captured by the camera are extracted from the background using 1st model, 2nd one is responsible for failures segmentation. 
+> Result are displayed in the dedicated application. 
 
 ## Table of Contents
 * [General Info](#general-information)
@@ -25,12 +25,13 @@
 ## Technologies Used
 - Python 3.7.0
 - Detectron2 v0.6
-- PyTorch 1.8.0
+- PyTorch 1.11.0
 - Pandas 1.3.5
 - OpenCv 4.5.1
-- NumPy 1.21.2
+- NumPy 1.21.3
 - Dash 2.1.0
 - Json 2.0.9
+- CUDA 11.3
 
 ## Features
 
@@ -48,7 +49,6 @@ MLOPs platform - Neptune AI for experiments tracking pourposes.***
 ## Project Status
 Project is: _in progress_ 
 
-
 ## Room for Improvement
 
 - Integrate Microsoft SQL database with the appliacation
@@ -57,7 +57,3 @@ Project is: _in progress_
 
 ## Experiments tracking
 Neptune [click here](https://app.neptune.ai/kacper-marciniak/)
-
-
-
-

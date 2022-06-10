@@ -23,7 +23,7 @@ from PARAMETERS import LABELING_EPS_VALUE
 # Path to the folder with extracted teeth images utilized for automatic annotations
 
 
-path_to_data = askdirectory(title="Select path to input").replace('/','\\')
+path_to_data = askdirectory(title="Select path to input folder with images to annotate").replace('/','\\')
 
 if path_to_data == None: exit()
 
