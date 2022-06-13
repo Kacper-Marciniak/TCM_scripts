@@ -18,9 +18,10 @@
 - Contains jupyter notebooks for models development purpouses
 - Implemented automatic failures annotations in .json labelme compatible format
 - Results displayed in dash-based interactive application
+- Teeth sharpening strategy optimization
 - Saving results in .csv files
 - Automatic dataset creation
-- Models comparing and results tracking witn Neptune.AI
+- Models comparing and results tracking using Neptune.AI
 
 ## Technologies Used
 - Python 3.7.0

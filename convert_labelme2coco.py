@@ -1,21 +1,26 @@
 
 # import functions
+import os
 from labelme2coco import get_coco_from_labelme_folder, save_json
+from tkinter_dialog_custom import askdirectory
+from PARAMETERS import PATH_TRAINING_DATA_SEGMENTATION
 
-base_folder = r"D:\Konrad\TCM_scan\traning_segmentation/"
+# base_folder = r"D:\Konrad\TCM_scan\traning_segmentation"
+base_folder = askdirectory(title="Select data folder",initialdir=PATH_TRAINING_DATA_SEGMENTATION)
 
+if not os.path.exists(os.path.join(base_folder,"annotations")): os.makedirs(os.path.join(base_folder,"annotations"))
 
 # set labelme training data directory
-labelme_train_folder = base_folder + "data/train"
+labelme_train_folder = os.path.join(base_folder, "train")
 
 # set labelme validation data directory
-labelme_val_folder = base_folder + "data/val"
+labelme_val_folder = os.path.join(base_folder, "val")
 
 # set labelme validation data directory
-labelme_test_folder = base_folder + "data/test"
+labelme_test_folder = os.path.join(base_folder, "test")
 
 # set path for coco json to be saved
-export_dir = base_folder + "data/annotations/data_"
+export_dir = os.path.join(base_folder, "annotations/data_")
 
 # create train coco object
 train_coco = get_coco_from_labelme_folder(labelme_train_folder)
