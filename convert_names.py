@@ -1,8 +1,8 @@
-
 import pandas as pd
 import numpy as np
 import os
 
+#TODO: improve name changing process
 
 FILE = 'test.csv'
 PATH = r'D:\Konrad\TCM_scan\dash_skany\test'
