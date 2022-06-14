@@ -24,4 +24,3 @@ LABELING_EPS_VALUE = 0.003
 # ----------------- NEPTUNE AI ----------------- #
 NEPTUNE_SEGMENTATION_PROJECT_PATH = 'kacper-marciniak/TCM-segmentation'
 NEPTUNE_EXTRACTION_PROJECT_PATH = 'kacper-marciniak/TCM-extraction'
-# ----------------- TRENING ----------------- #
