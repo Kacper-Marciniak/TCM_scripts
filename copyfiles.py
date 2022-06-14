@@ -5,9 +5,6 @@ import random
 from tkinter_dialog_custom import askdirectory
 from tkinter_dialog_custom import askYesNo
 
-#destination = r'D:\Konrad\TCM_scan\training_extraction\data\anot'
-#PATHS_LIST =  [r'D:\Konrad\TCM_scan\training_extraction\data\temp',] # Foldery do analizy, wpisz ile chesz - zrobi wszystkie jeden po drugim
-
 def list_paths_to_all_files(path):
     list_files = list()
     for element in os.listdir(path):
