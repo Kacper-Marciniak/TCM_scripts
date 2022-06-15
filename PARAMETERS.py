@@ -9,7 +9,8 @@ PATH_MODELS_EXTRACTION = r"Z:\TCM\modele\ekstrakcja"
 PATH_MODELS_SEGMENTATION = r"Z:\TCM\modele\segmentacja"
 PATH_TRAINING_DATA_SEGMENTATION = r"Z:\TCM\trening\DATASETY\segmentacja"
 PATH_TRAINING_DATA_EXTRACTION = r"Z:\TCM\trening\DATASETY\ekstrakcja"
-PATH_DASH_SQL_DIR = r"Z:\TCM\dash_sql"
+PATH_DASH_SQL_DIR = r"Z:\TCM\DATA\dash_sql"
+PATH_EXTRACTED_TEETH_DIR = r"Z:\TCM\DATA\extracted_teeth"
 
 # ----------------- FAILURES ----------------- #
 DICTIONARY_FAILURES = {
