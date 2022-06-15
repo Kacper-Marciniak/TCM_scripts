@@ -2,8 +2,8 @@
 > This repositorium is a modified version of https://github.com/konrad98ft/TCM_scripts
 > 
 > Machine vision development software utilized for inspection of the broach teeth. It presents 2 step inference.
-> Images captured by the camera are extracted from the background using 1st model, 2nd one is responsible for failures segmentation. 
-> Result are displayed in the dedicated application. 
+> ROI is extracted grom the images captured by the camera using first model. Second one is responsible for failures detection and segmentation. 
+> Result are displayed in the dedicated interactive application.
 
 ## Table of Contents
 * [General Info](#general-information)
@@ -16,11 +16,12 @@
 
 ## General Information
 - Contains jupyter notebooks for models development purpouses
-- Implemented automatic failures annotations in .json labelme compatible format
+- Implemented automatic failures annotations in .json format compatible with labelme
 - Results displayed in dash-based interactive application
 - Teeth sharpening strategy optimization
 - Saving results in .csv files
 - Automatic dataset creation
+- Custom evaluation methods using modified F1-score
 - Models comparing and results tracking using Neptune.AI
 
 ## Technologies Used
@@ -52,9 +53,9 @@ Project is: _in progress_
 
 ## Room for Improvement
 
-- Integrate Microsoft SQL database with the appliacation
-- Collect historic data
-- Optimization of the sharpening strategy for teeth
+- Implementing optimization of the teeth sharpening strategy
+- Changes to the GUI
+- Implementing preview of 3D scan results
 
 ## Experiments tracking
 Neptune [click here](https://app.neptune.ai/kacper-marciniak/)
