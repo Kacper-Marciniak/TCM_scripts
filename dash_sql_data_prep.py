@@ -9,13 +9,16 @@ import prepare_models
 import sql_connection
 import shutil
 
+from tkinter_dialog_custom import askdirectory
+from PARAMETERS import PATH_DASH_SQL_DIR
+
 # User define variables
 SCAN_NAME = '22-06-06-12-17-full'    # Current date as scan name (can be replaced with automatic generator)
 
 # Program variables
-INPUT_PATH = r'I:\SKANY_2D_PRZEROBIONE_CZERWIEC\11033_20210721_180502'    # Path to the folder with the images directly from scaner
-OUTPUT_IMG_PATH  = r'D:\Konrad\TCM_scan\dash_sql/'   # Path to the folder with processed images_F
-OUTPUT_IMG_PATH = OUTPUT_IMG_PATH + SCAN_NAME
+INPUT_PATH = askdirectory(title="Select folder with images from scanner")    # Path to the folder with the images directly from scaner
+OUTPUT_IMG_PATH  = askdirectory(title="Select DASH-SQL server to write to", initialdir=PATH_DASH_SQL_DIR)  # Path to the folder with processed images_F
+OUTPUT_IMG_PATH = os.path.join(OUTPUT_IMG_PATH,SCAN_NAME)
 
 models = prepare_models.Models()
 sql = sql_connection.SQLConnection(debug=False)
@@ -45,7 +48,7 @@ def decode_segmentation(im, imageName):
         im = Image.fromarray(output)
         output = np.zeros_like(im)
         pred_masks_instance = []
-        out_png_name = OUTPUT_IMG_PATH + r'\segmentation' + '\\' + base_name + '-' + str(i) + '.png'
+        out_png_name = f'{OUTPUT_IMG_PATH}/segmentation/{base_name}-{str(i)}.png'
         im.save(out_png_name)
 
     # Combine instances 'stępienie' and save it for the further rows analyzys in 'stepienie_analyze' directory
@@ -66,7 +69,7 @@ def decode_segmentation(im, imageName):
 
     if(blunt): # If there was at least 1 'stepienie' instance save results
         im = Image.fromarray(output_stepienie)
-        out_png_name = OUTPUT_IMG_PATH + r'\stepienie_analyze' + '\\' + base_name  + '.png'
+        out_png_name = f'{OUTPUT_IMG_PATH}/stepienie_analyze/{base_name}.png'
         im = ImageOps.grayscale(im)
         im.save(out_png_name)
 
@@ -106,15 +109,15 @@ def add_binary_categories(inst_ids):
     return narost, zatarcie, wykruszenie
 def tooth_inference(image_name):
     try:
-        im = cv.imread(INPUT_PATH + '//' + image_name) # Read image
-        cv.imwrite(OUTPUT_IMG_PATH + '/images/' + image_name, im)
+        im = cv.imread(os.path.join(INPUT_PATH,image_name)) # Read image
+        cv.imwrite(f'{OUTPUT_IMG_PATH}/images/{image_name}', im)
         outputs = extraction_predictor(im)
         minx, miny, maxx, maxy = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy())
     except:
-        print("There is problem with image:",INPUT_PATH + '//' + image_name)
+        print(f"There is problem with image: {INPUT_PATH}/{image_name}")
         try:
-            source = INPUT_PATH + '//' + image_name
-            destination = OUTPUT_IMG_PATH + '/images/' + image_name 
+            source = os.path.join(INPUT_PATH, image_name)
+            destination = f'{OUTPUT_IMG_PATH}/images/{image_name}' 
             shutil.copyfile(source, destination)
         except:
             print("Can't copy corrupted file")
@@ -122,7 +125,7 @@ def tooth_inference(image_name):
 
     try: # Extraction
         roi = im.copy()[int(miny)-50:int(maxy)+50, int(minx)-100:int(maxx)+100] 
-        cv.imwrite(OUTPUT_IMG_PATH + '/otsu_tooth/' + image_name , roi) 
+        cv.imwrite(f'{OUTPUT_IMG_PATH}/otsu_tooth/{image_name}', roi) 
 
         length = (maxy - miny)/603
         width = (maxx - minx)/603
@@ -205,7 +208,7 @@ def row_inference():
                     containers[int(miny[i]):stepienie.shape[0]+int(miny[i]), int(minx[i])+100:stepienie.shape[1]+int(minx[i])+100] += stepienie # Combine images 
         # Calculate combined 'stepienie' size
         row_stepienie = draw_plot(containers,row_number) 
-        print('row_number: {} stepienie: {:0.3f} mm'.format(row_number,row_stepienie))
+        print(f'row_number: {row_number} stepienie: {row_stepienie:0.3f} mm')
         sql.add_row_param(SCAN_NAME, row_stepienie, row_number)
 def draw_plot(img,name):
 
@@ -236,12 +239,12 @@ def draw_plot(img,name):
     stop = max([i for i,b in enumerate(bins) if b > max_v*0.1]) # Find max bin index with values above 10% 
     start = min([i for i,b in enumerate(bins) if b > max_v*0.1]) # Find max bin index with values above 10% 
     #print("start: {} px, stop: {}, dif {:0.3f} mm".format(start,stop,(stop-start)/603))
-    plot_name = OUTPUT_IMG_PATH + r'/plots/' + str(name) + '.jpg' 
+    plot_name = f'{OUTPUT_IMG_PATH}/plots/{str(name)}.jpg' 
     plt.plot(bins)
     plt.axhline(y=int(max_v*0.1), color='r', linestyle='-') # 10% line
     plt.axvline(x=start, color='r', linestyle='--') # 10% line
     plt.axvline(x=stop, color='r', linestyle='--') # 10% line
-    plt.title("Row stępienie = {:0.3f}mm".format((stop-start)/603))
+    plt.title(f"Row stępienie = {((stop-start)/603):0.3f} mm")
     plt.axis("off")
     plt.savefig(plot_name,dpi=300)
     plt.clf()
