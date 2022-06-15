@@ -1,0 +1,6 @@
+*.pkl
+*.xlsx
+*.pptx
+*.json
+*.pth
+__pycache__/
