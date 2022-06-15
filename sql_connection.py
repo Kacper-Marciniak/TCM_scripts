@@ -23,17 +23,17 @@ class SQLConnection:
         self.cursor.execute('SELECT * FROM SKAN WHERE nazwa=%s', scan_name)
         skan = self.cursor.fetchall()
         if skan:
-            print("Scan with \"{}\" name exist. Please input other name.".format(scan_name))
+            print(f"Scan with \"{scan_name}\" name exist. Please input other name.")
             self.current_scan_id = -1
             exit()
         else:
-            print("Scan with \"{}\" name doesn't exist.".format(scan_name))
-            insertStatement = "INSERT INTO SKAN (nazwa, path) output Inserted.id VALUES (\'{}\',\'{}\')".format(scan_name, path) 
+            print(f"Scan with \"{scan_name}\" name doesn't exist.")
+            insertStatement = f"INSERT INTO SKAN (nazwa, path) output Inserted.id VALUES (\'{scan_name}\',\'{path}\')" 
             self.cursor.execute(insertStatement)
             tempid = self.cursor.fetchall()
             self.cursor.execute('SELECT * FROM SKAN WHERE nazwa=%s', scan_name)
             skan = self.cursor.fetchall()
-            print("Created scan with name \"{}\".".format(scan_name))
+            print(f"Created scan with name \"{scan_name}\".")
             self.current_scan_id = tempid[0][0]
     
     def add_tooth(self,tooth_name,d):
@@ -42,7 +42,7 @@ class SQLConnection:
         Add to existing row or create new one.
         Fill tooth table with data.
         '''
-        if(self.debug): print("Add tooth {}".format(tooth_name))
+        if(self.debug): print(f"Add tooth {tooth_name}")
         row_number = (tooth_name.split('.')[0]).split('_')[1]
         section_number = (tooth_name.split('.')[0]).split('_')[0]
         row_id = self.get_row_id(row_number)
@@ -69,13 +69,13 @@ class SQLConnection:
             insertStatement = insertStatement.replace('None','Null')
             try:
                 self.cursor.execute(insertStatement)
-                if(self.debug): print('\tCreated tooth {}.'.format(tooth_name))
+                if(self.debug): print(f'\tCreated tooth {tooth_name}.')
                 self.conn.commit()
             except:
                 print("\t Execution error:")
                 print('\t',insertStatement)
                 self.cursor.execute(insertStatement)
-                if(self.debug): print('\tCreated tooth {}.'.format(tooth_name))
+                if(self.debug): print(f'\tCreated tooth {tooth_name}.')
                 self.conn.commit()
 
 
@@ -83,11 +83,11 @@ class SQLConnection:
 
     def get_scan_param(self, param_name, scan_name = ''):
         if(scan_name):
-            insertStatement = 'SELECT {} FROM SKAN WHERE nazwa=\'{}\';'.format(param_name, scan_name)
+            insertStatement = f'SELECT {param_name} FROM SKAN WHERE nazwa=\'{scan_name}\';'
             if(self.debug): print(insertStatement)
             self.cursor.execute(insertStatement)
         else:
-            self.cursor.execute('SELECT {} FROM SKAN;'.format(param_name))
+            self.cursor.execute(f'SELECT {param_name} FROM SKAN;')
         data = self.cursor.fetchall()
         return data
 
@@ -100,14 +100,14 @@ class SQLConnection:
         self.cursor.execute('SELECT id FROM ROW WHERE scan_id=%d and row_number=%d', (self.current_scan_id, row_number))
         row_id = self.cursor.fetchall()
         if row_id:
-            if(self.debug): print("\tRow {} already exists.".format(row_number))
+            if(self.debug): print(f"\tRow {row_number} already exists.")
             return row_id[0][0]
         else:
-            if(self.debug): print("\tRow {} doesn't exist".format(row_number))
-            insertStatement = "INSERT INTO ROW (scan_id, row_number) output Inserted.id VALUES ({},{})".format(self.current_scan_id, row_number)
+            if(self.debug): print(f"\tRow {row_number} doesn't exist")
+            insertStatement = f"INSERT INTO ROW (scan_id, row_number) output Inserted.id VALUES ({self.current_scan_id},{row_number})"
             self.cursor.execute(insertStatement)
             row_id = self.cursor.fetchall()
-            if(self.debug): print("\tCreated row {}.".format(row_number))
+            if(self.debug): print(f"\tCreated row {row_number}.")
             return row_id[0][0]
     
     def get_row_param(self, scan_name, param_name, conditions=''):
@@ -115,14 +115,14 @@ class SQLConnection:
         Returns parameter value from ROW table associated with current scan.
         '''
         # Get id of the selected scan_name
-        insertStatement = 'SELECT id FROM SKAN WHERE nazwa=\'{}\';'.format(scan_name)
+        insertStatement = f'SELECT id FROM SKAN WHERE nazwa=\'{scan_name}\';'
         if(self.debug): print(insertStatement)
         self.cursor.execute(insertStatement)
         scan_id = self.cursor.fetchall()
         if scan_id:
             scan_id= scan_id[0][0]
         else:
-            print("Scan with \"{}\" name doesn't exist. Can't get any parameters".format(scan_name))
+            print(f"Scan with \"{scan_name}\" name doesn't exist. Can't get any parameters")
             exit()
             
         # Extend basic selection condition if there are any
@@ -141,7 +141,7 @@ class SQLConnection:
         '''
         row_id = self.get_row_param(scan_name,'id','row_number={}'.format(row_number))[0][0]
         if len(conditions)>0: conditions = "and " + conditions   
-        insertStatement = 'SELECT {} FROM TOOTH WHERE row_id={} {}'.format(param_name, row_id, conditions)
+        insertStatement = f'SELECT {param_name} FROM TOOTH WHERE row_id={row_id} {conditions}'
         if(self.debug): print(insertStatement)
         self.cursor.execute(insertStatement)
         skan = self.cursor.fetchall()
@@ -152,19 +152,19 @@ class SQLConnection:
         Update ROW table by adding cumulated 'stepienie' value for whole row
         '''
         # Get id of the selected scan_name
-        insertStatement = 'SELECT id FROM SKAN WHERE nazwa=\'{}\''.format(scan_name)
+        insertStatement = f'SELECT id FROM SKAN WHERE nazwa=\'{scan_name}\''
         if(self.debug): print(insertStatement)
         self.cursor.execute(insertStatement)
         scan_id = self.cursor.fetchall()
         if scan_id:
             scan_id = scan_id[0][0]
         else:
-            print("Scan with \"{}\" name doesn't exist. Can't get any parameters".format(scan_name))
+            print(f"Scan with \"{scan_name}\" name doesn't exist. Can't get any parameters")
             exit()
 
         # Update table
         try:
-            insertStatement = "UPDATE ROW SET stepienie_row_value={} WHERE scan_id={} and row_number={}".format(stepienie, scan_id, row_number)
+            insertStatement = f"UPDATE ROW SET stepienie_row_value={stepienie} WHERE scan_id={scan_id} and row_number={row_number}"
             if(self.debug): print(insertStatement)
             self.cursor.execute(insertStatement)
             self.conn.commit()
@@ -176,19 +176,19 @@ class SQLConnection:
         Update ROW table by adding custom 'stepienie' value for whole row
         '''
         # Get id of the selected scan_name
-        insertStatement = 'SELECT id FROM SKAN WHERE nazwa=\'{}\''.format(scan_name)
+        insertStatement = f'SELECT id FROM SKAN WHERE nazwa=\'{scan_name}\''
         if(self.debug): print(insertStatement)
         self.cursor.execute(insertStatement)
         scan_id = self.cursor.fetchall()
         if scan_id:
             scan_id = scan_id[0][0]
         else:
-            print("Scan with \"{}\" name doesn't exist. Can't get any parameters".format(scan_name))
+            print(f"Scan with \"{scan_name}\" name doesn't exist. Can't get any parameters")
             exit()
 
         # Update table
         try:
-            insertStatement = "UPDATE ROW SET stepienie_correction={} WHERE scan_id={} and row_number={}".format(stepienie, scan_id, row_number)
+            insertStatement = f"UPDATE ROW SET stepienie_correction={stepienie} WHERE scan_id={scan_id} and row_number={row_number}"
             if(self.debug): print(insertStatement)
             self.cursor.execute(insertStatement)
             self.conn.commit()
@@ -199,19 +199,19 @@ class SQLConnection:
 
     def select_from_view(self, scan_name, param_name, conditions=''):
         if len(conditions)>0: conditions = "and " + conditions 
-        insertStatement = "SELECT tooth_number, row_number, {}, image_name FROM [View_1] WHERE nazwa=\'{}\' {};".format(param_name, scan_name, conditions)
+        insertStatement = f"SELECT tooth_number, row_number, {param_name}, image_name FROM [View_1] WHERE nazwa=\'{scan_name}\' {conditions};"
         self.cursor.execute(insertStatement)
         data = self.cursor.fetchall()
         return data
     
     def get_table_names(self,table_name):
-        insertStatement = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = \'{}\''.format(table_name)
+        insertStatement = f'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = \'{table_name}\''
         self.cursor.execute(insertStatement)
         data = self.cursor.fetchall()
         return data
     
     def get_table_values(self,table_name):
-        insertStatement = 'SELECT * FROM {}'.format(table_name)
+        insertStatement = f'SELECT * FROM {table_name}'
         self.cursor.execute(insertStatement)
         data = self.cursor.fetchall()
         return data
@@ -250,7 +250,7 @@ class SQLConnection:
                     params_c2 += v + ', '
             
             # Check if id from table exist in database
-            self.cursor.execute('SELECT ID FROM TypeOfBroach WHERE ID={}'.format(id))
+            self.cursor.execute(f'SELECT ID FROM TypeOfBroach WHERE ID={id}')
             data = self.cursor.fetchall()
             data = np.array(data)
             data = np.reshape(data,(-1))
@@ -267,12 +267,12 @@ class SQLConnection:
             # Create record
             if(base == 0):
                 # insertStatement = "UPDATE TypeOfBroach SET {} WHERE ID={}".format(params, id)
-                insertStatement = "INSERT INTO TypeOfBroach (ID, {}) VALUES ({},{})".format(params_c1, id, params_c2) 
+                insertStatement = f"INSERT INTO TypeOfBroach (ID, {params_c1}) VALUES ({id},{params_c2})"
                 print('Create')
 
             # Update record
             if(base == 1):
-                insertStatement = "UPDATE TypeOfBroach SET {} WHERE ID={}".format(params_u, id)
+                insertStatement = f"UPDATE TypeOfBroach SET {params_u} WHERE ID={id}"
                 print('Update')
 
             # Execute insert statement
@@ -306,7 +306,7 @@ class SQLConnection:
                 # Formatting issues
                 if v == 'True': v='1'
                 if v == 'False': v='0'
-                if key == 'DateOfEntry' or key == 'ScrappingDate':v = " \'{}\' ".format(v)
+                if key == 'DateOfEntry' or key == f'ScrappingDate':v = f" \'{v}\' "
                 # Creating insert Statement parameters
                 if(i+1==len(keys)): 
                     params_u += str(key) + '=' + v
@@ -318,7 +318,7 @@ class SQLConnection:
                     params_c2 += v + ', '
             
             # Check if id from table exist in database
-            self.cursor.execute('SELECT ID FROM Broach WHERE ID={}'.format(id))
+            self.cursor.execute(f'SELECT ID FROM Broach WHERE ID={id}')
             data = self.cursor.fetchall()
             data = np.array(data)
             data = np.reshape(data,(-1))
@@ -335,12 +335,12 @@ class SQLConnection:
             # Create record
             if(base == 0):
                 # insertStatement = "UPDATE TypeOfBroach SET {} WHERE ID={}".format(params, id)
-                insertStatement = "INSERT INTO Broach (ID, {}) VALUES ({},{})".format(params_c1, id, params_c2) 
+                insertStatement = f"INSERT INTO Broach (ID, {params_c1}) VALUES ({id},{params_c2})" 
                 print('Create')
 
             # Update record
             if(base == 1):
-                insertStatement = "UPDATE Broach SET {} WHERE ID={}".format(params_u, id)
+                insertStatement = f"UPDATE Broach SET {params_u} WHERE ID={id}"
                 print('Update')
 
             insertStatement = insertStatement.replace('\'None\'','null')

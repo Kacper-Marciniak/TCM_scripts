@@ -8,7 +8,6 @@ After controll it files from "pth" dir can be put into:
 '\traning_segmentation\data\anot' and utilized for datasets creation.
 '''
 
-import tkinter
 import prepare_models
 import os
 import cv2 as cv
@@ -23,7 +22,7 @@ from PARAMETERS import LABELING_EPS_VALUE
 # Path to the folder with extracted teeth images utilized for automatic annotations
 
 
-path_to_data = askdirectory(title="Select path to input folder with images to annotate").replace('/','\\')
+path_to_data = askdirectory(title="Select path to input folder with images to annotate").replace('\\\\','\\').replace('\\','/')
 
 if path_to_data == None: exit()
 
@@ -74,7 +73,7 @@ for idx_file,imageName in enumerate(list_images): # Iterate over all images in f
     print(f"Auto labeling image: {imageName} --- {idx_file+1}/{len(list_images)}")
     im = cv.imread(os.path.join(path_to_data,imageName))
     outputs = segmentation_predictor(im) # Make prediction 
-    name = imageName.split('\\')[-1]
+    name = imageName.split('/')[-1]
     img = Image.fromarray(im)
     base_name = name.split('.')[0]
     # Get mask and label from the prediction
