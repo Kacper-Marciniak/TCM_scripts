@@ -1,5 +1,5 @@
 import glob, os
-from random import random
+import random
 from shutil import copyfile
 
 from PARAMETERS import PATH_TRAINING_DATA_SEGMENTATION
@@ -9,8 +9,8 @@ from tkinter_dialog_custom import askdirectory
 
 DATASET_PATH = askdirectory(title="Select dataset directory", initialdir=PATH_TRAINING_DATA_SEGMENTATION)
 
-val_precentage = 0.15 #15% 
-test_precentage = val_precentage+0.15 #15% (15-30)
+val_precentage = 0.15
+test_precentage = 0.15
 
 
 def split_data():
@@ -22,24 +22,39 @@ def split_data():
 
     os.chdir(os.path.join(DATASET_PATH,'anot'))
     list_files = glob.glob("*.json")
-    for i,file in enumerate(list_files):
-        print(f"Splitting data {i+1}/{len(list_files)}")
+    len_list_files = len(list_files)
+
+    subset_lens = {
+        "Test": round(test_precentage*len_list_files),
+        "Val": round(val_precentage*len_list_files),
+    }
+
+    random.shuffle(list_files)
+
+    list_files_test = list_files[0:subset_lens["Test"]]
+    list_files_val = list_files[subset_lens["Test"]:subset_lens["Test"]+subset_lens["Val"]]
+    list_files_train = list_files[subset_lens["Test"]+subset_lens["Val"]:]
+
+    for i,file in enumerate(list_files_val):
+        print(f"Val {i+1}/{len(list_files_val)}")
         split_name = file.split('.')[-2]
-        r = random()
-        if(r < val_precentage): #VAL
-            copyfile(f'{DATASET_PATH}/anot/{split_name}.json', f'{DATASET_PATH}/val/{split_name}.json')
-            copyfile(f'{DATASET_PATH}/anot/{split_name}.png', f'{DATASET_PATH}/val/{split_name}.png')
-            os.remove(f'{DATASET_PATH}/anot/{split_name}.png')
-            os.remove(f'{DATASET_PATH}/anot/{split_name}.json')
-        if(val_precentage < r < test_precentage): #TEST
-            copyfile(f'{DATASET_PATH}/anot/{split_name}.json',f'{DATASET_PATH}/test/{split_name}.json')
-            copyfile(f'{DATASET_PATH}/anot/{split_name}.png',f'{DATASET_PATH}/test/{split_name}.png')
-            os.remove(f'{DATASET_PATH}/anot/{split_name}.png')
-            os.remove(f'{DATASET_PATH}/anot/{split_name}.json')
-        if(test_precentage < r): #TRAIN
-            copyfile(f'{DATASET_PATH}/anot/{split_name}.json',f'{DATASET_PATH}/train/{split_name}.json')
-            copyfile(f'{DATASET_PATH}/anot/{split_name}.png',f'{DATASET_PATH}/train/{split_name}.png')
-            os.remove(f'{DATASET_PATH}/anot/{split_name}.png')
+        copyfile(f'{DATASET_PATH}/anot/{split_name}.json', f'{DATASET_PATH}/val/{split_name}.json')
+        copyfile(f'{DATASET_PATH}/anot/{split_name}.png', f'{DATASET_PATH}/val/{split_name}.png')
+        os.remove(f'{DATASET_PATH}/anot/{split_name}.png')
+        os.remove(f'{DATASET_PATH}/anot/{split_name}.json')
+    for i,file in enumerate(list_files_test):
+        print(f"Test {i+1}/{len(list_files_test)}")
+        split_name = file.split('.')[-2]    
+        copyfile(f'{DATASET_PATH}/anot/{split_name}.json',f'{DATASET_PATH}/test/{split_name}.json')
+        copyfile(f'{DATASET_PATH}/anot/{split_name}.png',f'{DATASET_PATH}/test/{split_name}.png')
+        os.remove(f'{DATASET_PATH}/anot/{split_name}.png')
+        os.remove(f'{DATASET_PATH}/anot/{split_name}.json')
+    for i,file in enumerate(list_files_train):
+        print(f"Test {i+1}/{len(list_files_train)}")
+        split_name = file.split('.')[-2]     
+        copyfile(f'{DATASET_PATH}/anot/{split_name}.json',f'{DATASET_PATH}/train/{split_name}.json')
+        copyfile(f'{DATASET_PATH}/anot/{split_name}.png',f'{DATASET_PATH}/train/{split_name}.png')
+        os.remove(f'{DATASET_PATH}/anot/{split_name}.png')
 
 def merge_data():
     # Before splitting put all data with annotations to the traing folder
