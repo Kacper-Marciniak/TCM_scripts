@@ -26,3 +26,9 @@ LABELING_EPS_VALUE = 0.003
 # ----------------- NEPTUNE AI ----------------- #
 NEPTUNE_SEGMENTATION_PROJECT_PATH = 'kacper-marciniak/TCM-segmentation'
 NEPTUNE_EXTRACTION_PROJECT_PATH = 'kacper-marciniak/TCM-extraction'
+
+# ----------------- SQL ----------------- #
+SQL_SERVER = r'DESKTOP-5LI4OVK\SQLEXPRESS'
+SQL_DATABASE_NAME = r'TCM_test'
+#SQL_PORT = 50118
+SQL_PORT = 1433

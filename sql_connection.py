@@ -2,16 +2,22 @@ from numpy import empty
 import pymssql 
 import numpy as np
 
+from PARAMETERS import SQL_SERVER
+from PARAMETERS import SQL_DATABASE_NAME
+from PARAMETERS import SQL_PORT
+
 class SQLConnection:
     '''
-    Module used to establish saving and reading SQL database for application enviornment
+    Module used to establish saving and reading SQL database for application environment
     '''
     
     def __init__(self,debug=False):
         # Initialize SQL connection
         self.current_scan_id = -1
         self.debug = debug
-        self.conn = pymssql.connect(server = 'DESKTOP-JH390UV\SQLEXPRESS', database='TCM_test') 
+        self.conn = pymssql.connect(server = SQL_SERVER, 
+        database=SQL_DATABASE_NAME, 
+        port=SQL_PORT)
         self.cursor = self.conn.cursor()
 
     def create_scan(self,scan_name,path):
