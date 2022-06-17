@@ -6,6 +6,10 @@ import glob
 import statistics
 from PARAMETERS import  DICTIONARY_FAILURES
 
+"""
+Copy of old custom evaluation method
+"""
+
 class custom_metrics(): # structure to hold one instance of metrics
     def __init__(self) -> None:
         self.F1 = 0.0
@@ -30,7 +34,7 @@ def custom_eval(segmentation_predictor,path_current_dataset):
         json_label = json.load(file )
         im = cv.imread(os.path.join(pth,f"{base_name}.png"))
         print(os.path.join(pth,f"{base_name}.png"))
-        pred_classes, image_metrics = calculate_metrics(im, json_label, segmentation_predictor)
+        pred_classes, image_metrics = calculate_metrics_for_image(im, json_label, segmentation_predictor)
 
         if list(DICTIONARY_FAILURES.keys())[list(DICTIONARY_FAILURES.values()).index("wykruszenie")] in pred_classes: 
             F1_score_global_wykruszenie.append(image_metrics["F1"]["wykruszenie"])
@@ -92,7 +96,7 @@ def custom_eval(segmentation_predictor,path_current_dataset):
 
     return model_metrics
 
-def calculate_metrics(im, json_label, segmentation_predictor):
+def calculate_metrics_for_image(im, json_label, segmentation_predictor):
         #cv.imshow("test",im)
 
         label_outputs = dict()
