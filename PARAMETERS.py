@@ -29,6 +29,5 @@ NEPTUNE_EXTRACTION_PROJECT_PATH = 'kacper-marciniak/TCM-extraction'
 
 # ----------------- SQL ----------------- #
 SQL_SERVER = r'DESKTOP-5LI4OVK\SQLEXPRESS'
-SQL_DATABASE_NAME = r'TCM_test'
-#SQL_PORT = 50118
+SQL_DATABASE_NAME = r'TCM_database'
 SQL_PORT = 1433
