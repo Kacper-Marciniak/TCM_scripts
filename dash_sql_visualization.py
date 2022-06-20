@@ -1,29 +1,22 @@
-from re import A
-from click import style
-from cv2 import DescriptorMatcher_BRUTEFORCE_HAMMINGLUT
 import dash
 from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output, State
-from matplotlib.pyplot import get
-from numpy.lib.function_base import disp
 import plotly.express as px
 import os
 import pandas as pd
 import numpy as np
 from skimage import io
-import math
 import cv2 as cv
 import sql_connection
 import optimization_module
 import statistics
-from dash import Dash, dash_table
+from dash import dash_table
 from collections import OrderedDict
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from os.path import exists
-from PIL import Image, ImageFile
-from dash.exceptions import PreventUpdate
+from PIL import ImageFile
 import statistics
 import datetime
 ImageFile.LOAD_TRUNCATED_IMAGES = True # Enable corrupted images loading
@@ -88,16 +81,16 @@ def update_image(clickData,value,FOLDER_NAME,draw_pick):
                 # Get classes and failures data from sql database and process it (some data is saved as string)
                 mask = output = np.zeros_like(img)
                 row = int((IMAGE_NAME.split('.')[0]).split('_')[1])
-                inst_ids = convert_sql_output(sql.get_tooth_param(default_broach,'pred_class',row,'image_name=\'{}\''.format(IMAGE_NAME)))
+                inst_ids = convert_sql_output(sql.get_tooth_param(default_broach,'pred_class',row,f"image_name=\'{IMAGE_NAME}\'"))
                 if inst_ids: inst_ids = str(inst_ids[0])
                 inst_ids = inst_ids[inst_ids.rfind('[') + 1:]
                 inst_ids = inst_ids[:inst_ids.rfind(']')]
                 inst_ids = np.array(inst_ids.split(' '))
-                inst_num = int(convert_sql_output(sql.get_tooth_param(default_broach,'num_instances',row,'image_name=\'{}\''.format(IMAGE_NAME)))[0])
+                inst_num = int(convert_sql_output(sql.get_tooth_param(default_broach,'num_instances',row,f"image_name=\'{IMAGE_NAME}\'"))[0])
 
                 # Iterate over existing failures instances and color it
                 for i in range(int(inst_num)):
-                    DATA_FOLDER_PATH =  path + '\segmentation'  
+                    DATA_FOLDER_PATH = os.path.join(path,'segmentation')
                     BASE_NAME = IMAGE_NAME.split('.')[0]
                     FULL_PATH = DATA_FOLDER_PATH + '\\' + BASE_NAME + '-' + str(i) + '.png'
                     mask = io.imread(FULL_PATH)
@@ -121,7 +114,12 @@ def update_image(clickData,value,FOLDER_NAME,draw_pick):
         print("Picked image is not available")
         FULL_PATH = path + SUBFOLDERS[0] + '/'  + IMAGE_NAME 
         print("Try to open:",FULL_PATH)
-        img = io.imread(FULL_PATH)
+        try:
+            img = io.imread(FULL_PATH)
+        except FileNotFoundError:
+            img = None
+            print(f"File is {FULL_PATH} unavailable!")
+
 
     # Preapre displayed image
     fig = px.imshow(img)
@@ -147,14 +145,14 @@ displayed_y_indicators = find_broach_width(default_broach,displayed_x_indicators
 
 # Params table values
 table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
-params_df = pd.DataFrame(sql.get_table_values('TypeOfBroach'))
-params_df.columns = table_columns_names
+table_values = sql.get_table_values('TypeOfBroach')
+params_df = pd.DataFrame(data = table_values, columns = table_columns_names)
 params_data = params_df.to_dict('records')
 
 # Broach (options) table values
 broach_columns_names = convert_sql_output(sql.get_table_names('Broach'))
-broach_df = pd.DataFrame(sql.get_table_values('Broach'))
-broach_df.columns = broach_columns_names
+broach_values = sql.get_table_values('Broach')
+broach_df = pd.DataFrame(data=broach_values, columns = broach_columns_names)
 broach_data = broach_df.to_dict('records')
 
 # Terminate sql connection 
@@ -192,15 +190,15 @@ available_template_indicators = ['Example Type 1', 'Example Type 2', 'Example Ty
 # Layout global styling parameters
 cards_st ={"height": 660,"font-family": "Arial"}
 cards_st_options ={"height": 480,"font-family": "Arial"}
-cards_st_optimazation={"height": 800,"font-family": "Arial"}
+cards_st_optimization={"height": 800,"font-family": "Arial"}
 font_st = {'font-size':'20px','height':'35px',"font-family": "Arial"}
 
 # Utilized graphics
-PLOTLY_LOGO = "http://www.mvlab.pl/images/logo.png"
-TCM_LOGO = "https://www.tcm-international.com/fileadmin/user_upload/TCM-Logo-klein.JPG"
-polish = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Flag_of_Poland_%28normative%29.svg/640px-Flag_of_Poland_%28normative%29.svg.png"
-english = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Flag_of_Great_Britain_%281707%E2%80%931800%29.svg/800px-Flag_of_Great_Britain_%281707%E2%80%931800%29.svg.png?20220223062637"
-german = "https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/Flag_of_Germany.svg/255px-Flag_of_Germany.svg.png"
+PLOTLY_LOGO = r"http://www.mvlab.pl/images/logo.png"
+TCM_LOGO = r"https://www.tcm-international.com/fileadmin/user_upload/TCM-Logo-klein.JPG"
+polish = r"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Flag_of_Poland_%28normative%29.svg/640px-Flag_of_Poland_%28normative%29.svg.png"
+english = r"https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Flag_of_Great_Britain_%281707%E2%80%931800%29.svg/800px-Flag_of_Great_Britain_%281707%E2%80%931800%29.svg.png?20220223062637"
+german = r"https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/Flag_of_Germany.svg/255px-Flag_of_Germany.svg.png"
 
 # Bootstrap style
 app = dash.Dash(__name__,external_stylesheets =[dbc.themes.LITERA],suppress_callback_exceptions=True)
@@ -243,7 +241,7 @@ def generate_navbar(active_page = 0):
                     items=[
                         {"label": "Menu",        "href": "/menu",         "external_link": True,    "active": pages[0]},
                         {"label": "Scanning",    "href": "/scanning",     "external_link": True,    "active": pages[1]},
-                        {"label": "Optimazation","href": "/optimazation", "external_link": True,    "active": pages[2]},
+                        {"label": "Optimization","href": "/optimization", "external_link": True,    "active": pages[2]},
                         {"label": "Options",     "href": "/options",      "external_link": True,    "active": pages[3]},
                     ],style=font_st
                 )
@@ -268,18 +266,16 @@ def generate_navbar(active_page = 0):
 # Creating tables (optimization)
 def generate_type_dropdown():
     sql = sql_connection.SQLConnection(debug=False) 
-    data = pd.DataFrame(sql.get_table_values('TypeOfBroach'))
-    table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
+    data = pd.DataFrame(np.array(sql.get_table_values('TypeOfBroach')), columns=convert_sql_output(sql.get_table_names('TypeOfBroach')))
     sql = None
-    data.columns = table_columns_names
     
     return list(data["Project"])
 def generate_broach_table():
     sql = sql_connection.SQLConnection(debug=False) 
-    data = pd.DataFrame(sql.get_table_values('Broach'))
     table_columns_names = convert_sql_output(sql.get_table_names('Broach'))
+    table_values = sql.get_table_values('Broach')
+    data = pd.DataFrame(data = table_values, columns = table_columns_names)
     sql = None
-    data.columns = table_columns_names
     
     return list(data["Project"])
 
@@ -287,10 +283,12 @@ def generate_broach_table():
 def show_selected_params(project, return_type):
     # 1- return values 0- return columns names
     sql = sql_connection.SQLConnection(debug=False) 
-    data = pd.DataFrame(sql.get_table_values('TypeOfBroach'))
+    table_values = sql.get_table_values('TypeOfBroach')
+    print(table_values)
     table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
+    print(sql.get_table_values('TypeOfBroach'))
+    data = pd.DataFrame(data= table_values, columns=table_columns_names)
     sql = None
-    data.columns = table_columns_names
     data = data[["Project","MinimalTootHeightLoss","MinimalToothLength","ModelBluntAngle","AngleOfAttack","AngleOfClerance","AngleOfBack","NominalTootHeight"]]
     data = data[data["Project"]==project]
     if(return_type==1): 
@@ -327,7 +325,10 @@ def show_selected_broach_params(scan_name, return_type):
     for row in available_rows:
         l = convert_sql_output(sql.get_tooth_param(scan_name,'length',row))
         l = list(filter(None, l)) # Remmove None if exist in returned data
-        L = (statistics.mean(l))
+        try:
+            L = (statistics.mean(l))
+        except statistics.StatisticsError:
+            L = 0
         tooth_lengths.append(L)
     min_tooth_length = min(tooth_lengths) 
     min_tooth_length_row = tooth_lengths.index(min_tooth_length) + 1
@@ -344,12 +345,13 @@ def show_selected_broach_params(scan_name, return_type):
 # Used to generate dropdowns in "Add broach" table (options)        
 def display_current_broach_types():
     sql = sql_connection.SQLConnection(debug=False) 
-    data = pd.DataFrame(sql.get_table_values('TypeOfBroach'))
     table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
+    table_values = sql.get_table_values('TypeOfBroach')
+    data = pd.DataFrame(data = table_values, columns=table_columns_names)
     sql = None
-    data.columns = table_columns_names
     data = data[["Project"]]
     return list(data['Project'])
+
 def update_types_dropdown():
     
     current_date = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -374,9 +376,9 @@ def update_types_dropdown():
     return dropdown
 
 # Optimization regeneration types table column names (to keep names used as keys in various planes in one place)
-type_I = ['Time [min]','Cost [zł]','Operations no. front','Front surface [um]']
-type_top = ['Time [min]','Cost [zł]','Operations no. top','Top surface [um]']
-type_II = ['Time [min]','Cost [zł]','Operations no. front','Front surface [um]','Operations no. top','Top surface [um]']
+type_I = ['Time [min]','Cost [PLN]','Operations no. front','Front surface [μm]']
+type_top = ['Time [min]','Cost [PLN]','Operations no. top','Top surface [μm]']
+type_II = ['Time [min]','Cost [PLN]','Operations no. front','Front surface [μm]','Operations no. top','Top surface [μm]']
 
 # Layout structures
 scanning = html.Div([
@@ -578,7 +580,7 @@ scanning = html.Div([
     outline = True)
 ])
 
-optimazation = html.Div([
+optimization = html.Div([
     generate_navbar(2),
     html.Br(),
     dbc.Card([
@@ -647,7 +649,7 @@ optimazation = html.Div([
                                 dbc.Button('Submit note', id='note-submit-button', color="secondary" ,n_clicks=0, style={'font-size': '20px'}), 
                             ]),
                         ]),
-                    ],style = cards_st_optimazation),
+                    ],style = cards_st_optimization),
                 ]),
                 width=6,
             ),
@@ -692,14 +694,14 @@ optimazation = html.Div([
                                 style_table = {'overflowX': 'auto','minWidth': '100%'},
                                 style_data_conditional=[
                                     {
-                                        'if': {'filter_query': '{{Front surface [um]}} > {}'.format(50)},
+                                        'if': {'filter_query': '{{Front surface [μm]}} > {}'.format(50)},
                                         'backgroundColor': '#FF4136',
                                         'color': 'white'
                                     }
                                 ]
                             ),             
                         ]),
-                    ],style = cards_st_optimazation),
+                    ],style = cards_st_optimization),
                 ]),
                 width=6,
             ),  
@@ -831,7 +833,7 @@ options = html.Div([
 index_page = html.Div([
     dcc.Link('Go to Page 1', href='/scanning'),
     html.Br(),
-    dcc.Link('Go to Page 2', href='/optimazation'),
+    dcc.Link('Go to Page 2', href='/optimization'),
     html.Br(),
     dcc.Link('Go to Page 3', href='/options'),
 ])
@@ -842,8 +844,8 @@ index_page = html.Div([
 def display_page(pathname):
     if pathname == '/scanning':
         return scanning
-    elif pathname == '/optimazation':
-        return optimazation
+    elif pathname == '/optimization':
+        return optimization
     elif pathname == '/options':
         return options
     else:
@@ -956,9 +958,9 @@ def add_row(n_clicks, rows, columns):
 )
 def create_output(scan_data,type_data):
     lenght = scan_data[0]['Tooth min lenght [mm]']
-    #min_acceptable_lenght = type_data[0]['MinimalToothLenght']*1000 #[um] 
-    min_acceptable_lenght = 1200 #[um]
-    lenght*=1000 #[um]
+    #min_acceptable_lenght = type_data[0]['MinimalToothLenght']*1000 #[μm] 
+    min_acceptable_lenght = 1200 #[μm]
+    lenght*=1000 #[μm]
     return conditional_table_cells_formating(type_II[3],lenght, min_acceptable_lenght, 50, type_II[5], 80, 40, 20)
 
 @app.callback(
@@ -968,8 +970,8 @@ def create_output(scan_data,type_data):
 )
 def create_output(scan_data,type_data):
     lenght = scan_data[0]['Tooth min lenght [mm]']
-    lenght*=1000 #[um]
-    min_acceptable_lenght = 1200 #[um] 
+    lenght*=1000 #[μm]
+    min_acceptable_lenght = 1200 #[μm] 
     return conditional_table_cells_formating(type_I[3],lenght, min_acceptable_lenght, 50, None, 80, 40, 20)
 
 @app.callback(
@@ -979,9 +981,9 @@ def create_output(scan_data,type_data):
 )
 def create_output(scan_data,type_data):
     lenght = scan_data[0]['Tooth min lenght [mm]']
-    lenght*=1000 #[um]
-    min_acceptable_lenght = 1200 #[um] 
-    min_acceptable_height = 80 #[um]
+    lenght*=1000 #[μm]
+    min_acceptable_lenght = 1200 #[μm] 
+    min_acceptable_height = 80 #[μm]
     return conditional_table_cells_formating(None,lenght, min_acceptable_lenght, 50, type_top[3], 80, 40, 20)
 
 
@@ -989,28 +991,28 @@ def conditional_table_cells_formating(field,value,border,offest,field2,value2,bo
     style_data_conditional=[
         {
         'if': {
-            'filter_query': '{{{}}} > {}'.format('Front surface [um]',value-border-offest),
+            'filter_query': '{{{}}} > {}'.format('Front surface [μm]',value-border-offest),
             'column_id': '{}'.format(field)
         },
         'backgroundColor': '#FFFF00',
         },
         {
         'if': {
-            'filter_query': '{{{}}} > {}'.format('Front surface [um]',value-border),
+            'filter_query': '{{{}}} > {}'.format('Front surface [μm]',value-border),
             'column_id': '{}'.format(field)
         },
         'backgroundColor': '#FF4500',
         },
         {
         'if': {
-            'filter_query': '{{{}}} > {}'.format('Top surface [um]',value2-border2-offest2),
+            'filter_query': '{{{}}} > {}'.format('Top surface [μm]',value2-border2-offest2),
             'column_id': '{}'.format(field2)
         },
         'backgroundColor': '#FFFF00',
         },
         {
         'if': {
-            'filter_query': '{{{}}} > {}'.format('Top surface [um]',value2-border2),
+            'filter_query': '{{{}}} > {}'.format('Top surface [μm]',value2-border2),
             'column_id': '{}'.format(field2)
         },
         'backgroundColor': '#FF4500',
@@ -1035,8 +1037,8 @@ def add_row(n_clicks, rows, columns):
         # Refreshing table on reload
         sql = sql_connection.SQLConnection(debug=True)
         table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
-        params_df = pd.DataFrame(sql.get_table_values('TypeOfBroach'))
-        params_df.columns = table_columns_names
+        table_values = sql.get_table_values('TypeOfBroach')
+        params_df = pd.DataFrame(data= table_values, columns=table_columns_names)
         rows = params_df.to_dict('records') 
         sql = None
         return rows     
@@ -1055,8 +1057,8 @@ def upload_to_sql(n_clicks,data):
         sql = sql_connection.SQLConnection(debug=True)
         success = sql.update_broach_params(data)
         table_columns_names = convert_sql_output(sql.get_table_names('TypeOfBroach'))
-        params_df = pd.DataFrame(sql.get_table_values('TypeOfBroach'))
-        params_df.columns = table_columns_names
+        table_values = sql.get_table_values('TypeOfBroach')
+        params_df = pd.DataFrame(data = table_values, columns = table_columns_names)
         params_data = params_df.to_dict('records')
         sql = None
         if(success == 1):return 'success',"Data updated successfuly.",update_types_dropdown()
@@ -1078,8 +1080,8 @@ def add_row(n_clicks, rows, columns):
         # Refreshing table on reload
         sql = sql_connection.SQLConnection(debug=True)
         table_columns_names = convert_sql_output(sql.get_table_names('Broach'))
-        params_df = pd.DataFrame(sql.get_table_values('Broach'))
-        params_df.columns = table_columns_names
+        table_values = sql.get_table_values('Broach')
+        params_df = pd.DataFrame(data = table_values, columns = table_columns_names)
         rows = params_df.to_dict('records') 
         sql = None
         return rows   
@@ -1097,8 +1099,8 @@ def upload_to_sql(n_clicks,data):
         sql = sql_connection.SQLConnection(debug=True)
         success = sql.define_new_broach(data)
         table_columns_names = convert_sql_output(sql.get_table_names('Broach'))
-        params_df = pd.DataFrame(sql.get_table_values('Broach'))
-        params_df.columns = table_columns_names
+        table_values = sql.get_table_values('Broach')
+        params_df = pd.DataFrame(data = table_values, columns = table_columns_names)
         params_data = params_df.to_dict('records')
         sql = None
         if(success == 1):return 'success',"Data updated successfuly."

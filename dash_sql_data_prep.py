@@ -2,8 +2,6 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
-from matplotlib.image import imread
-import scipy.misc
 from PIL import Image, ImageOps 
 import prepare_models
 import sql_connection
@@ -17,7 +15,7 @@ SCAN_NAME = '22-06-06-12-17-full'    # Current date as scan name (can be replace
 
 # Program variables
 INPUT_PATH = askdirectory(title="Select folder with images from scanner")    # Path to the folder with the images directly from scaner
-OUTPUT_IMG_PATH  = askdirectory(title="Select DASH-SQL server to write to", initialdir=PATH_DASH_SQL_DIR)  # Path to the folder with processed images_F
+OUTPUT_IMG_PATH  = askdirectory(title="Select DASH-SQL server to write to", initialdir = PATH_DASH_SQL_DIR)  # Path to the folder with processed images_F
 OUTPUT_IMG_PATH = os.path.join(OUTPUT_IMG_PATH,SCAN_NAME)
 
 models = prepare_models.Models()
@@ -28,8 +26,7 @@ segmentation_predictor = models.preapre_segmentation_model()
 if os.path.exists (OUTPUT_IMG_PATH) == False:os.mkdir(OUTPUT_IMG_PATH)
 models.create_missing_catalogs(OUTPUT_IMG_PATH) # Create subdirectories for the SCAN_NAME directory
 
-def decode_segmentation(im, imageName):
-  
+def decode_segmentation(im, imageName):  
     outputs = segmentation_predictor(im) # Inference 
     base_name = imageName.split('.')[0]
     # Get data from inference
