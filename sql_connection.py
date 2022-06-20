@@ -1,5 +1,5 @@
-from numpy import empty
-import pymssql 
+#import pymssql 
+import pyodbc
 import numpy as np
 
 from PARAMETERS import SQL_SERVER
@@ -12,13 +12,17 @@ class SQLConnection:
     '''
     
     def __init__(self,debug=False):
-        # Initialize SQL connection
         self.current_scan_id = -1
         self.debug = debug
-        self.conn = pymssql.connect(server = SQL_SERVER, 
+        # Initialize SQL connection
+        self.conn = pyodbc.connect(
+            'DRIVER={ODBC Driver 17 for SQL Server};SERVER='+SQL_SERVER+';DATABASE='+SQL_DATABASE_NAME+';UID=sa;PWD=superuser'
+            )
+        self.cursor = self.conn.cursor()  
+        """self.conn = pymssql.connect(server = SQL_SERVER, 
         database=SQL_DATABASE_NAME, 
         port=SQL_PORT)
-        self.cursor = self.conn.cursor()
+        self.cursor = self.conn.cursor()"""
 
     def create_scan(self,scan_name,path):
         '''
@@ -204,7 +208,7 @@ class SQLConnection:
             return -1
 
     def select_from_view(self, scan_name, param_name, conditions=''):
-        if len(conditions)>0: conditions = "and " + conditions 
+        if len(conditions)>0: conditions = f"and {conditions}" 
         insertStatement = f"SELECT tooth_number, row_number, {param_name}, image_name FROM [View_1] WHERE nazwa=\'{scan_name}\' {conditions};"
         self.cursor.execute(insertStatement)
         data = self.cursor.fetchall()
@@ -214,13 +218,13 @@ class SQLConnection:
         insertStatement = f'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = \'{table_name}\''
         self.cursor.execute(insertStatement)
         data = self.cursor.fetchall()
-        return data
+        return np.array(data)
     
     def get_table_values(self,table_name):
         insertStatement = f'SELECT * FROM {table_name}'
         self.cursor.execute(insertStatement)
         data = self.cursor.fetchall()
-        return data
+        return np.array(data)
 
     def update_broach_params(self,data):
         ids = [] # All ids from table
