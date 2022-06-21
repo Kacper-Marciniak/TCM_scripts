@@ -100,7 +100,8 @@ def add_binary_categories(inst_ids):
 def tooth_inference(image_name):
     try: # Extraction predictor
         im = cv.imread(os.path.join(INPUT_PATH,image_name)) # Read image
-        cv.imwrite(OUTPUT_IMG_PATH+'/images/'+image_name, im)
+        im_to_save = compress_image(im)
+        cv.imwrite(OUTPUT_IMG_PATH+'/images/'+image_name, im_to_save)
         outputs = extraction_predictor(im) # extraction
         min_x, min_y, max_x, max_y = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy())
     except Exception as e:
@@ -256,6 +257,31 @@ def draw_plot(img,name):
     
 
     return (stop-start)/603
+
+## COMPRESSION
+JPEG_COMPRESSION_QUALITY = 50
+PNG_SAVING_COMPRESSION = 3 # 0-fast -> 9-good compression
+RESIZE_SCALE = 4
+
+def compress_image(img, path_tmp_file=""):
+    if path_tmp_file == "":  path_tmp_file=  os.path.join(os.path.dirname(os.path.abspath(__file__)),"temp.jpg")
+    w,h = img.shape[1],img.shape[0]
+    img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    img = cv.resize(img,[w//RESIZE_SCALE,h//RESIZE_SCALE], interpolation=cv.INTER_NEAREST)
+    # save file with compression as jpeg
+    cv.imwrite(
+        path_tmp_file, 
+        img, 
+        [cv.IMWRITE_JPEG_QUALITY, JPEG_COMPRESSION_QUALITY, 
+        cv.IMWRITE_JPEG_OPTIMIZE, 1,
+        cv.IMWRITE_JPEG_PROGRESSIVE, 1], 
+    )
+    img = cv.imread(path_tmp_file, 0) # flag 0 - read as grayscale
+    # remove temp jpeg file
+    os.remove(path_tmp_file)
+    img = cv.resize(img,[w,h], interpolation=cv.INTER_NEAREST)
+    return img
+
 
 list_files = list(os.listdir(INPUT_PATH))
 
