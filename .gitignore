@@ -4,3 +4,4 @@
 *.json
 *.pth
 __pycache__/
+.neptune/
