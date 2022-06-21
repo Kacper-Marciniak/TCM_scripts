@@ -30,7 +30,7 @@ class SQLConnection:
         If yes return -1 to signalize error.
         If not retun scan id.
         '''
-        self.cursor.execute('SELECT * FROM SKAN WHERE nazwa=%s', scan_name)
+        self.cursor.execute('''SELECT * FROM SKAN WHERE nazwa=?''', scan_name)
         skan = self.cursor.fetchall()
         if skan:
             print(f"Scan with \"{scan_name}\" name exist. Please input other name.")
@@ -41,7 +41,7 @@ class SQLConnection:
             insertStatement = f"INSERT INTO SKAN (nazwa, path) output Inserted.id VALUES (\'{scan_name}\',\'{path}\')" 
             self.cursor.execute(insertStatement)
             tempid = self.cursor.fetchall()
-            self.cursor.execute('SELECT * FROM SKAN WHERE nazwa=%s', scan_name)
+            self.cursor.execute('''SELECT * FROM SKAN WHERE nazwa=?''', scan_name)
             skan = self.cursor.fetchall()
             print(f"Created scan with name \"{scan_name}\".")
             self.current_scan_id = tempid[0][0]
@@ -57,7 +57,7 @@ class SQLConnection:
         section_number = (tooth_name.split('.')[0]).split('_')[0]
         row_id = self.get_row_id(row_number)
         
-        self.cursor.execute('SELECT tooth_number FROM TOOTH WHERE row_id=%d and tooth_number=%d',(row_id,section_number))
+        self.cursor.execute('SELECT tooth_number FROM TOOTH WHERE row_id=? and tooth_number=?',(row_id,section_number))
         tooth_number = self.cursor.fetchall()
         if tooth_number:
             print("\tError. Tried to initialize the same tooth again.")
@@ -107,7 +107,7 @@ class SQLConnection:
         If yes - return its id. 
         If no - create it and add return its id after that.
         '''
-        self.cursor.execute('SELECT id FROM ROW WHERE scan_id=%d and row_number=%d', (self.current_scan_id, row_number))
+        self.cursor.execute('SELECT id FROM ROW WHERE scan_id=? and row_number=?', (self.current_scan_id, row_number))
         row_id = self.cursor.fetchall()
         if row_id:
             if(self.debug): print(f"\tRow {row_number} already exists.")
