@@ -41,7 +41,7 @@ for i,image_name in enumerate(files): # Process all available images
         print(f"Exception: {e}")
         try:
             source = im_pth
-            destination = f"{OUTPUT_IMG_PATH}/images/{image_name}"
+            destination = OUTPUT_IMG_PATH+"/images/"+image_name
             shutil.copyfile(source, destination)
         except Exception as E:
             print("Can't copy corrupted file")
