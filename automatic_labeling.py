@@ -12,7 +12,6 @@ import prepare_models
 import os
 import cv2 as cv
 import numpy as np
-from PIL import Image  
 
 from tkinter_dialog_custom import askdirectory
 
@@ -74,7 +73,6 @@ for idx_file,imageName in enumerate(list_images): # Iterate over all images in f
     im = cv.imread(os.path.join(path_to_data,imageName))
     outputs = segmentation_predictor(im) # Make prediction 
     name = imageName.split('/')[-1]
-    img = Image.fromarray(im)
     base_name = name.split('.')[0]
     # Get mask and label from the prediction
     pred_masks = outputs["instances"].to("cpu").pred_masks.numpy()
@@ -110,7 +108,7 @@ for idx_file,imageName in enumerate(list_images): # Iterate over all images in f
 
     # Iterate over failures classes and convert generated bitmaps, extract contours, approximate it with the points, save it to the .json file       
     for class_name in failures_dictionary.values():
-        im = cv.cvtColor(np.array(Image.fromarray(outputs[class_name])) , cv.COLOR_BGR2GRAY )   
+        im = cv.cvtColor(np.array(outputs[class_name]) , cv.COLOR_BGR2GRAY )   
         contours = cv.findContours(im, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         if len(contours[0]) != 0:
             for c in contours[0]:
@@ -120,7 +118,7 @@ for idx_file,imageName in enumerate(list_images): # Iterate over all images in f
 
     # Prepare end of the labelme json file
     labelme_json = labelme_json[:-2]
-    labelme_json += labelme_end(f"{base_name}.png",img.size[1],img.size[0]) # Add some additional information
+    labelme_json += labelme_end(f"{base_name}.png",im.shape[0],im.shape[1]) # Add some additional information
     labelme_json += '}' # Clossing requires by .json format
     out_txt_name = os.path.join(path_to_data, f"{base_name}.json")
     # Save labelme json file
