@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
 import pandas as pd
-from matplotlib.image import imread
-import scipy.misc
 from PIL import Image, ImageOps 
 import prepare_models
 # r'D:\Konrad\TCM_scan\dash_skany\C_short',
