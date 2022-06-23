@@ -33,11 +33,11 @@ class SQLConnection:
         self.cursor.execute('''SELECT * FROM SKAN WHERE nazwa=?''', scan_name)
         skan = self.cursor.fetchall()
         if skan:
-            print(f"Scan with \"{scan_name}\" name exist. Please input other name.")
+            print(f"Scan with name \"{scan_name}\" exist. Please input other name.")
             self.current_scan_id = -1
             exit()
         else:
-            print(f"Scan with \"{scan_name}\" name doesn't exist.")
+            print(f"Scan with name \"{scan_name}\" doesn't exist.")
             insertStatement = f"INSERT INTO SKAN (nazwa, path) output Inserted.id VALUES (\'{scan_name}\',\'{path}\')" 
             self.cursor.execute(insertStatement)
             tempid = self.cursor.fetchall()
@@ -53,8 +53,8 @@ class SQLConnection:
         Fill tooth table with data.
         '''
         if(self.debug): print(f"Add tooth {tooth_name}")
-        row_number = (tooth_name.split('.')[0]).split('_')[1]
-        section_number = (tooth_name.split('.')[0]).split('_')[0]
+        row_number = (tooth_name.split('.')[-2]).split('_')[-2]
+        section_number = (tooth_name.split('.')[-2]).split('_')[-1]
         row_id = self.get_row_id(row_number)
         
         self.cursor.execute('SELECT tooth_number FROM TOOTH WHERE row_id=? and tooth_number=?',(row_id,section_number))
