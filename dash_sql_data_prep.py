@@ -11,11 +11,12 @@ from tkinter_dialog_custom import askdirectory
 from PARAMETERS import PATH_DASH_SQL_DIR
 
 # User define variables
-SCAN_NAME = str(datetime.datetime.now().strftime("%m%d%Y-%H%M%S"))    # Current date as scan name
+"""format: yy-mm-dd-time"""
+SCAN_NAME = str(datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S"))  # Current date as scan name
 
 # Program variables
 INPUT_PATH = askdirectory(title="Select folder with images from scanner").replace('\\\\','\\').replace('\\','/')    # Path to the folder with the images directly from scaner
-OUTPUT_IMG_PATH  = askdirectory(title="Select DASH-SQL server to write to", initialdir = PATH_DASH_SQL_DIR)  # Path to the folder with processed images_F
+OUTPUT_IMG_PATH  = askdirectory(title="Select DASH-SQL folder to write to", initialdir = PATH_DASH_SQL_DIR)  # Path to the folder with processed images_F
 OUTPUT_IMG_PATH = os.path.join(OUTPUT_IMG_PATH,SCAN_NAME).replace('\\\\','\\').replace('\\','/')
 
 # ROI extraction offsets
@@ -37,36 +38,29 @@ def decode_segmentation(im, imageName):
     pred_masks = outputs_instances.pred_masks.numpy()
     scores = outputs_instances.scores.numpy()
     pred_classes = outputs_instances.pred_classes.numpy()
-    pred_masks = np.expand_dims(pred_masks, axis=3) #[N H W Dummy]
+    pred_masks = np.expand_dims(pred_masks, axis=3).astype(dtype=np.uint8) #[N H W Dummy]
 
     # Save all instances as single masks in the 'segmentation' directory
-    output = np.zeros_like(im)
-    for i,mask in enumerate(pred_masks):  # Iterate over instances and save detectron binary masks as images
-        output_mask = np.where(mask == True, 255, output)
-        out_png_name = OUTPUT_IMG_PATH+"/segmentation/"+base_name+"_"+str(i)+".png"
-        if not (output_mask.size == 0): cv.imwrite(out_png_name, output_mask)
-
     # Combine instances 'stępienie' and save it for the further rows analyzys in 'stepienie_analyze' directory
-    output_stepienie = np.zeros_like(im)
+    output_stepienie = np.zeros((im.shape[0],im.shape[1],1),dtype=np.uint8)
     blunt = False # check if there is at least 1 valid blunt
     for mask, class_id in zip(pred_masks,pred_classes):  # Combine each 'stepienie' binary mask
-        """if(class_id == 2):
-            pred_masks_instance_stepienie.append(mask)   
-            if max(np.nonzero(pred_masks_instance_stepienie[-1])[1])/pred_masks_instance_stepienie[-1].shape[1] > 0.8: # check if the blunt is at the bottom of the image if not - skip (it can be improved)
-                #output_stepienie = np.where(pred_masks_instance_stepienie[-1] == True, 255, output_stepienie)
-                blunt = True"""
+        output_mask = np.where(mask == True, 255, 0)
+        out_png_name = OUTPUT_IMG_PATH+"/segmentation/"+base_name+"_"+str(i)+".png"
+        if not (output_mask.size == 0): cv.imwrite(out_png_name, output_mask)
         if(class_id == 2): 
             if max(np.nonzero(mask)[1])/mask.shape[1] > 0.8: # check if the blunt is at the bottom of the image if not - skip (it can be improved)
-                output_stepienie = cv.bitwise_or(mask, output_stepienie)
+                output_stepienie = cv.bitwise_or(src1=mask, src2=output_stepienie)
                 blunt = True
     
     blunt_value = 0
 
     if(blunt): # If there was at least 1 'stepienie' instance save results
         out_png_name = OUTPUT_IMG_PATH+"/stepienie_analyze/"+ base_name+".png"
-        output_stepienie = cv.cvtColor(output_stepienie, cv.COLOR_BGR2GRAY)
+
+        output_stepienie = cv.normalize(output_stepienie, None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX).astype(np.uint8)
+        blunt_value = analyze_blunt(output_stepienie)        
         cv.imwrite(out_png_name, output_stepienie)
-        blunt_value = analyze_blunt(output_stepienie)
     return pred_classes, scores, blunt_value
 
 def analyze_blunt(img):
@@ -121,7 +115,8 @@ def tooth_inference(image_name):
         min_y -= min_y_off
         max_y += max_y_off
         roi = im.copy()[int(min_y):int(max_y), int(min_x):int(max_x)] # Extracting ROI
-        cv.imwrite(OUTPUT_IMG_PATH+"/otsu_tooth/"+image_name, roi) 
+        roi_to_save = compress_image(roi)
+        cv.imwrite(OUTPUT_IMG_PATH+"/otsu_tooth/"+image_name, roi_to_save) 
         length = (max_y - min_y)/603
         width = (max_x - min_x)/603
         centre_lenght = ((max_y + min_y)/2)/603
@@ -180,7 +175,8 @@ def row_inference():
     available_rows = convert_sql_output(sql.get_row_param(SCAN_NAME,'row_number'))
 
     # Iterate over all rows
-    for row_number in available_rows: 
+    for i, row_number in enumerate(available_rows):
+        print(f"{i+1}/{len(available_rows)}")
 
         # Find image parameters for teeth with non zero stepienie value
         image_names = convert_sql_output(sql.get_tooth_param(scan_name = SCAN_NAME, param_name = 'image_name', row_number = str(row_number),conditions = 'stepienie>0'))
