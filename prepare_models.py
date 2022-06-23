@@ -2,8 +2,6 @@ from detectron2.utils.logger import setup_logger
 setup_logger()
 from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
-from detectron2.utils.visualizer import Visualizer
-from detectron2.utils.visualizer import ColorMode
 from detectron2 import model_zoo
 import os
 import shutil
@@ -12,6 +10,7 @@ import datetime
 from PARAMETERS import *
 from tkinter_dialog_custom import askdirectory
 from tkinter_dialog_custom import askopenfilename
+from tkinter_dialog_custom import choosefromlist
 
 
 class Models:
@@ -21,9 +20,10 @@ class Models:
 
     def preapre_extraction_model(self):
         try:
+            backbone = self._get_model_backbone_extraction()
             cfg = get_cfg()
-            cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
-            cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo
+            cfg.merge_from_file(model_zoo.get_config_file(backbone))
+            cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(backbone)  # Let training initialize from model zoo
             cfg.OUTPUT_DIR = PATH_TRAINING_OUTPUT_DIR_EXTRACTION
             cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1
             os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
@@ -35,11 +35,18 @@ class Models:
         except FileNotFoundError:
             return None
     
+    def _get_model_backbone_extraction(self):
+        return choosefromlist(BACKBONES_EXTRACTION, title="Select extraction network backbone")
+    
+    def _get_model_backbone_segmentation(self):
+        return choosefromlist(BACKBONES_SEGMENTATION, title="Select segmentation network backbone")
+
     def preapre_segmentation_model(self): 
         try:
+            backbone = self._get_model_backbone_segmentation()
             cfg = get_cfg()
-            cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-            cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
+            cfg.merge_from_file(model_zoo.get_config_file(backbone))
+            cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(backbone)
             cfg.OUTPUT_DIR =  PATH_TRAINING_OUTPUT_DIR_SEGMENTATION
             cfg.MODEL.ROI_HEADS.NUM_CLASSES = 4
             os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
