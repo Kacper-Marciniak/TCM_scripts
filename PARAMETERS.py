@@ -31,3 +31,30 @@ NEPTUNE_EXTRACTION_PROJECT_PATH = 'kacper-marciniak/TCM-extraction'
 SQL_SERVER = r'DESKTOP-5LI4OVK\SQLEXPRESS'
 SQL_DATABASE_NAME = r'TCM_database'
 SQL_PORT = 1433
+
+# ----------------- BACKBONES DETECTRON ----------------- #
+BACKBONES_EXTRACTION = [
+    "COCO-Detection/faster_rcnn_R_50_C4_1x.yaml",
+    "COCO-Detection/faster_rcnn_R_50_DC5_1x.yaml",
+    "COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml",
+    "COCO-Detection/faster_rcnn_R_50_C4_3x.yaml",
+    "COCO-Detection/faster_rcnn_R_50_DC5_3x.yaml",
+    "COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml",
+    "COCO-Detection/faster_rcnn_R_101_C4_3x.yaml",
+    "COCO-Detection/faster_rcnn_R_101_DC5_3x.yaml",
+    "COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml",
+    "COCO-Detection/faster_rcnn_X_101_3x.yaml"
+]
+
+BACKBONES_SEGMENTATION = [
+    "COCO-InstanceSegmentation/mask_rcnn_R_50_C4_1x.yaml",
+    "COCO-InstanceSegmentation/mask_rcnn_R_50_DC5_1x.yaml",
+    "COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml",
+    "COCO-InstanceSegmentation/mask_rcnn_R_50_C4_3x.yaml",
+    "COCO-InstanceSegmentation/mask_rcnn_R_50_DC5_3x.yaml",
+    "COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml",
+    "COCO-InstanceSegmentation/mask_rcnn_R_101_C4_3x.yaml",
+    "COCO-InstanceSegmentation/mask_rcnn_R_101_DC5_3x.yaml",
+    "COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml",
+    "COCO-InstanceSegmentation/mask_rcnn_X_101_FPN_3x.yaml",
+]
