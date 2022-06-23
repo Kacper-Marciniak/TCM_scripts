@@ -5,7 +5,7 @@ import random
 from tkinter_dialog_custom import askdirectory
 from tkinter_dialog_custom import askYesNo
 
-NUMBER_OF_FILES_TO_COPY = 100 # <------------------------------------
+NUMBER_OF_FILES_TO_COPY = 800 # <------------------------------------
 
 def list_paths_to_all_files(path):
     list_files = list()
@@ -21,10 +21,10 @@ def list_paths_to_all_files(path):
 paths_input_list = list()
 
 while True:
-    paths_input_list.append(askdirectory(title="Select path to input").replace('/','\\'))
+    paths_input_list.append(askdirectory(title="Select path to input").replace('\\\\','\\').replace('/','\\'))
     if not askYesNo(title="Add more folders?", message="Add more folders?"): break
 
-destination = askdirectory(title="Select path to output").replace('/','\\')
+destination = askdirectory(title="Select path to output").replace('\\\\','\\').replace('/','\\')
 
 if askYesNo(title="Create \'anot\' folder?", message="Create \'anot\' folder (dataset creation)?"):
     destination = os.path.join(destination,'anot')
