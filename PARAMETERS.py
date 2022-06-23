@@ -20,6 +20,10 @@ DICTIONARY_FAILURES = {
     3:"zatarcie"   
 }
 
+# ----------------- DEFAULT MODEL PARAMETERS ----------------- #
+DEFAULT_THRESH_EXTRACTION = 0.70
+DEFAULT_THRESH_SEGMENTATION = 0.85
+
 # ----------------- AUTOMATIC LABELING ----------------- #
 LABELING_EPS_VALUE = 0.003
 
