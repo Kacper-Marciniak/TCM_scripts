@@ -10,6 +10,10 @@ import datetime
 from tkinter_dialog_custom import askdirectory
 from PARAMETERS import PATH_DASH_SQL_DIR
 
+from time import time
+
+MEASURE_TIME = False
+
 # User define variables
 """format: yy-mm-dd-time"""
 SCAN_NAME = str(datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S"))  # Current date as scan name
@@ -27,11 +31,17 @@ sql = sql_connection.SQLConnection(debug=False)
 sql.create_scan(SCAN_NAME,OUTPUT_IMG_PATH)
 extraction_predictor = models.preapre_extraction_model()
 segmentation_predictor = models.preapre_segmentation_model()
+
+
 if os.path.exists (OUTPUT_IMG_PATH) == False: os.mkdir(OUTPUT_IMG_PATH)
 models.create_missing_catalogs(OUTPUT_IMG_PATH) # Create subdirectories for the SCAN_NAME directory
 
 def decode_segmentation(im, imageName):  
+    if MEASURE_TIME == True: t1 = time()
     outputs = segmentation_predictor(im) # Inference 
+    if MEASURE_TIME == True:
+        t2 = time()
+        print(f"Failure segmentation took {(t2-t1)*1000.0:.3f} ms")
     base_name = imageName.split('.')[0]
     # Get data from inference
     outputs_instances = outputs["instances"].to("cpu")
@@ -45,7 +55,7 @@ def decode_segmentation(im, imageName):
     output_stepienie = np.zeros((im.shape[0],im.shape[1],1),dtype=np.uint8)
     blunt = False # check if there is at least 1 valid blunt
     for mask, class_id in zip(pred_masks,pred_classes):  # Combine each 'stepienie' binary mask
-        output_mask = np.where(mask == True, 255, 0)
+        output_mask = cv.normalize(mask, None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX).astype(np.uint8)
         out_png_name = OUTPUT_IMG_PATH+"/segmentation/"+base_name+"_"+str(i)+".png"
         if not (output_mask.size == 0): cv.imwrite(out_png_name, output_mask)
         if(class_id == 2): 
@@ -107,8 +117,12 @@ def tooth_inference(image_name):
 
 
     try: # Extraction
+        if MEASURE_TIME == True: t1 = time()
         outputs = extraction_predictor(im) # extraction
-        min_x, min_y, max_x, max_y = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy()) #???????????????????????? ----------
+        if MEASURE_TIME == True:
+            t2 = time()
+            print(f"ROI extraction took {(t2-t1)*1000.0:.3f} ms")
+        min_x, min_y, max_x, max_y = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy())
         # ROI offsets
         min_x -= min_x_off
         max_x += max_x_off
@@ -287,7 +301,11 @@ for i,image_name in enumerate(list_files): # Process all available images
     print(f"{i+1}/{len(list_files)}")
 
     # Find single tooth parameters
+    if MEASURE_TIME == True: t1 = time()
     tooth_inference(image_name)
+    if MEASURE_TIME == True:
+        t2 = time()
+        print(f"Entire tooth inference process took {(t2-t1)*1000.0:.3f} ms")
 
 # Find row parameters
 row_inference()
