@@ -33,7 +33,12 @@ for i,image_name in enumerate(files): # Process all available images
         im = cv.imread(im_pth) # Read image
         outputs = extraction_predictor(im)
         min_x, min_y, max_x, max_y = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy())
-        roi = im.copy()[int(min_y)-min_y_off:int(max_y)+max_y_off, int(min_x)-min_x_off:int(max_x)+min_x_off] # Extracting ROI
+        # ROI offsets
+        min_x -= min_x_off
+        max_x += max_x_off
+        min_y -= min_y_off
+        max_y += max_y_off
+        roi = im.copy()[int(min_y):int(max_y), int(min_x):int(max_x)] # Extracting ROI
         if DEBUG:
             cv.imshow("ROI", roi)
             cv.waitKey(0)
