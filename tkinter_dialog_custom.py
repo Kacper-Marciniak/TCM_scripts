@@ -29,3 +29,20 @@ def askopenfilename(title="Select file", initialdir="",  filetypes =[('All files
     path = filedialog.askopenfilename(title=title, initialdir=initialdir, filetypes=filetypes)
     root.destroy()
     return path
+
+def choosefromlist(list_=list(), title="Choose one option", width=100):
+    root=tk.Tk()
+    root.title(title)
+    #root.geometry(f"{500}x{300}")
+    listbox = tk.Listbox(master=root, selectmode="SINGLE", width=width)
+    for i, element in enumerate(list_):
+        listbox.insert(i,str(element))
+    listbox.pack(fill=tk.BOTH)
+    root.update()
+    while True:
+        chosen = listbox.curselection()
+        if len(chosen) > 0: break
+        root.update()
+    root.destroy()
+    return list_[chosen[0]]
+
