@@ -37,30 +37,29 @@ def decode_segmentation(im, imageName):
     pred_masks = outputs_instances.pred_masks.numpy()
     scores = outputs_instances.scores.numpy()
     pred_classes = outputs_instances.pred_classes.numpy()
-    num_instances = pred_masks.shape[0] 
-    pred_masks = np.moveaxis(pred_masks, 0, -1)
+    pred_masks = np.expand_dims(pred_masks, axis=3) #[N H W Dummy]
 
     # Save all instances as single masks in the 'segmentation' directory
     output = np.zeros_like(im)
-    for i in range(num_instances):  # Iterate over instances and save detectron binary masks as images
-        output_mask = np.where(pred_masks[:, :, i:(i+1)] == True, 255, output)
+    for i,mask in enumerate(pred_masks):  # Iterate over instances and save detectron binary masks as images
+        output_mask = np.where(mask == True, 255, output)
         out_png_name = OUTPUT_IMG_PATH+"/segmentation/"+base_name+"_"+str(i)+".png"
-        if not (output_mask.size == 0):
-            cv.imwrite(out_png_name, output_mask)
+        if not (output_mask.size == 0): cv.imwrite(out_png_name, output_mask)
 
     # Combine instances 'stępienie' and save it for the further rows analyzys in 'stepienie_analyze' directory
-    pred_masks_instance_stepienie = []
     output_stepienie = np.zeros_like(im)
-    j = 0
     blunt = False # check if there is at least 1 valid blunt
-    for i in range(num_instances): # Combine each 'stepienie' binary mask
-        if(pred_classes[i] == 2):
-            pred_masks_instance_stepienie.append(pred_masks[:, :, i:(i+1)])
-            out_tpl = np.nonzero(pred_masks_instance_stepienie[j])        
-            if max(out_tpl[1])/pred_masks_instance_stepienie[j].shape[1] > 0.8: # check if the blunt is at the bottom of the image if not - skip (it can be improved)
-                output_stepienie = np.where(pred_masks_instance_stepienie[j] == True, 255, output_stepienie)
+    for mask, class_id in zip(pred_masks,pred_classes):  # Combine each 'stepienie' binary mask
+        """if(class_id == 2):
+            pred_masks_instance_stepienie.append(mask)   
+            if max(np.nonzero(pred_masks_instance_stepienie[-1])[1])/pred_masks_instance_stepienie[-1].shape[1] > 0.8: # check if the blunt is at the bottom of the image if not - skip (it can be improved)
+                #output_stepienie = np.where(pred_masks_instance_stepienie[-1] == True, 255, output_stepienie)
+                blunt = True"""
+        if(class_id == 2): 
+            if max(np.nonzero(mask)[1])/mask.shape[1] > 0.8: # check if the blunt is at the bottom of the image if not - skip (it can be improved)
+                output_stepienie = cv.bitwise_or(mask, output_stepienie)
                 blunt = True
-            j+=1
+    
     blunt_value = 0
 
     if(blunt): # If there was at least 1 'stepienie' instance save results
@@ -68,7 +67,7 @@ def decode_segmentation(im, imageName):
         output_stepienie = cv.cvtColor(output_stepienie, cv.COLOR_BGR2GRAY)
         cv.imwrite(out_png_name, output_stepienie)
         blunt_value = analyze_blunt(output_stepienie)
-    return num_instances, pred_classes, scores, blunt_value
+    return pred_classes, scores, blunt_value
 
 def analyze_blunt(img):
     # Find global bounding box containing all 'stepienie' instances
@@ -98,27 +97,30 @@ def add_binary_categories(inst_ids):
     return narost, zatarcie, wykruszenie
 
 def tooth_inference(image_name):
-    try: # Extraction predictor
+    try: # load
         im = cv.imread(os.path.join(INPUT_PATH,image_name)) # Read image
         im_to_save = compress_image(im)
         cv.imwrite(OUTPUT_IMG_PATH+'/images/'+image_name, im_to_save)
-        outputs = extraction_predictor(im) # extraction
-        min_x, min_y, max_x, max_y = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy())
-    except Exception as e:
-        print(f"There is problem with image: {INPUT_PATH}/{image_name}\n\t\tException: {e}")
-        min_x, min_y, max_x, max_y  = 0, 0, 0, 0
+    except Exception as e_load:
+        print(f"There is problem with thr image: {INPUT_PATH}/{image_name}\n\t\tException: {e_load}")
         try:
             source = os.path.join(INPUT_PATH, image_name)
-            destination = OUTPUT_IMG_PATH+"/images/"+image_name
+            destination = OUTPUT_IMG_PATH+r"/images/"+image_name
             shutil.copyfile(source, destination)
+            print("Original file copied!")
         except:
             print("Can't copy corrupted file")
 
 
-    try: # Segmentation
-        if not (min_x == min_y == max_x == max_y): 
-            roi = im.copy()[int(min_y)-min_y_off:int(max_y)+max_y_off, int(min_x)-min_x_off:int(max_x)+min_x_off]
-        else: roi = im.copy()
+    try: # Extraction
+        outputs = extraction_predictor(im) # extraction
+        min_x, min_y, max_x, max_y = list(list(outputs["instances"].to("cpu").pred_boxes)[0].numpy()) #???????????????????????? ----------
+        # ROI offsets
+        min_x -= min_x_off
+        max_x += max_x_off
+        min_y -= min_y_off
+        max_y += max_y_off
+        roi = im.copy()[int(min_y):int(max_y), int(min_x):int(max_x)] # Extracting ROI
         cv.imwrite(OUTPUT_IMG_PATH+"/otsu_tooth/"+image_name, roi) 
         length = (max_y - min_y)/603
         width = (max_x - min_x)/603
@@ -127,8 +129,8 @@ def tooth_inference(image_name):
 
         length, width, centre_lenght, centre_width = round(length,5), round(width,5), round(centre_lenght,5), round(centre_width,5) 
         try: # Segmentation
-            num_instances, pred_class, score, stepienie = decode_segmentation(roi, image_name)
-            num_instances = str(num_instances)
+            pred_class, score, stepienie = decode_segmentation(roi, image_name)
+            num_instances = str(pred_class.shape[0])
             score = str([round(elem, 4) for elem in score])
             pred_class = str(pred_class)
             stepienie = stepienie/603
@@ -142,7 +144,7 @@ def tooth_inference(image_name):
             stepienie = None
             narost, zatarcie, wykruszenie = None,None,None
     except Exception as e_ext:
-        print(f"Extraction error in tooth: {image_name},\n\t\tException: {e_ext}")
+        print(f"ROI extraction error in tooth: {image_name},\n\t\tException: {e_ext}")
         length = None
         width = None
         centre_lenght = None
@@ -170,9 +172,7 @@ def tooth_inference(image_name):
     sql.add_tooth(image_name,dict)
 
 def convert_sql_output(sql_data):
-    sql_data = np.array(sql_data)
-    sql_data = np.reshape(sql_data,(-1))
-    return sql_data
+    return np.reshape(np.array(sql_data),(-1))
 
 def row_inference():
   
@@ -245,16 +245,14 @@ def draw_plot(img,name):
     stop = max([i for i,b in enumerate(bins) if b > max_v*0.1]) # Find max bin index with values above 10% 
     start = min([i for i,b in enumerate(bins) if b > max_v*0.1]) # Find max bin index with values above 10% 
     
-    plot_name = f'{OUTPUT_IMG_PATH}/plots/{str(name)}.jpg' 
     plt.plot(bins)
     plt.axhline(y=int(max_v*0.1), color='r', linestyle='-') # 10% line
     plt.axvline(x=start, color='r', linestyle='--') # 10% line
     plt.axvline(x=stop, color='r', linestyle='--') # 10% line
     plt.title(f"Row stępienie = {((stop-start)/603):0.3f} mm")
     plt.axis("off")
-    plt.savefig(plot_name,dpi=300)
-    plt.clf()
-    
+    plt.savefig(f'{OUTPUT_IMG_PATH}/plots/{str(name)}.jpg',dpi=300)
+    plt.clf()    
 
     return (stop-start)/603
 
@@ -281,7 +279,6 @@ def compress_image(img, path_tmp_file=""):
     os.remove(path_tmp_file)
     img = cv.resize(img,[w,h], interpolation=cv.INTER_NEAREST)
     return img
-
 
 list_files = list(os.listdir(INPUT_PATH))
 
