@@ -16,10 +16,8 @@ from collections import OrderedDict
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from os.path import exists
-from PIL import ImageFile
 import statistics
 import datetime
-ImageFile.LOAD_TRUNCATED_IMAGES = True # Enable corrupted images loading
 
 
 def convert_sql_output(sql_data):
@@ -32,6 +30,7 @@ def find_last_scan(scan_names):
     Find scan with was created as last to display it at first in the application
     Required name format yy-mm-dd-time
     '''
+    if len(scan_names) == 0: return "None"
     last = scan_names[0]
     for scan in scan_names:
         if scan > last: last = scan
@@ -196,8 +195,8 @@ font_st = {'font-size':'20px','height':'35px',"font-family": "Arial"}
 # Utilized graphics
 PLOTLY_LOGO = r"http://www.mvlab.pl/images/logo.png"
 TCM_LOGO = r"https://www.tcm-international.com/fileadmin/user_upload/TCM-Logo-klein.JPG"
-polish = r"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Flag_of_Poland_%28normative%29.svg/640px-Flag_of_Poland_%28normative%29.svg.png"
-english = r"https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Flag_of_Great_Britain_%281707%E2%80%931800%29.svg/800px-Flag_of_Great_Britain_%281707%E2%80%931800%29.svg.png?20220223062637"
+polish = r"https://upload.wikimedia.org/wikipedia/en/thumb/1/12/Flag_of_Poland.svg/320px-Flag_of_Poland.svg.png"
+english = r"https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Flag_of_the_United_Kingdom_%282-3%29.svg/150px-Flag_of_the_United_Kingdom_%282-3%29.svg.png"
 german = r"https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/Flag_of_Germany.svg/255px-Flag_of_Germany.svg.png"
 
 # Bootstrap style
@@ -831,11 +830,26 @@ options = html.Div([
 ])
 
 index_page = html.Div([
-    dcc.Link('Go to Page 1', href='/scanning'),
-    html.Br(),
-    dcc.Link('Go to Page 2', href='/optimization'),
-    html.Br(),
-    dcc.Link('Go to Page 3', href='/options'),
+    generate_navbar(0),
+    html.Div([
+        dbc.Card([
+            dbc.CardHeader(
+                html.H2('Menu główne'),
+            ),
+            dbc.CardBody([
+                html.Div([
+                    html.Ul([
+                        html.Li(dcc.Link('SKAN', href='/scanning')),
+                        html.Li(dcc.Link('OPTYMALIZACJA', href='/optimization')),
+                        html.Li(dcc.Link('OPCJE', href='/options'))
+                    ]),
+                    html.Br(),
+                    html.P('Wersja testowa aplikacji', style = font_st),
+                ]),
+            ])                    
+        ])
+    ])
+
 ])
 
 # Update displayed page
